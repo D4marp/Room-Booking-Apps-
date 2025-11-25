@@ -161,8 +161,8 @@ class BookingCard extends StatelessWidget {
                   Row(
                     children: [
                       _buildInfoChip(
-                        '${booking.numberOfNights} ${booking.numberOfNights == 1 ? 'night' : 'nights'}',
-                        Icons.nights_stay,
+                        '${booking.numberOfDays} ${booking.numberOfDays == 1 ? 'day' : 'days'}',
+                        Icons.calendar_today,
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       _buildInfoChip(
@@ -174,7 +174,7 @@ class BookingCard extends StatelessWidget {
 
                   const SizedBox(height: AppSpacing.md),
 
-                  // Payment status and amount
+                  // Booking status and time range
                   Row(
                     children: [
                       Expanded(
@@ -182,7 +182,7 @@ class BookingCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Total Amount',
+                              'Time Range',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -191,10 +191,10 @@ class BookingCard extends StatelessWidget {
                                   ),
                             ),
                             Text(
-                              booking.formattedTotalAmount,
+                              booking.formattedTimeRange,
                               style: Theme.of(context)
                                   .textTheme
-                                  .titleLarge
+                                  .titleMedium
                                   ?.copyWith(
                                     color: AppColors.primaryBlue,
                                     fontWeight: FontWeight.bold,
@@ -212,20 +212,20 @@ class BookingCard extends StatelessWidget {
                               vertical: AppSpacing.xs,
                             ),
                             decoration: BoxDecoration(
-                              color: _getPaymentStatusColor().withOpacity(0.1),
+                              color: _getStatusColor().withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: _getPaymentStatusColor(),
+                                color: _getStatusColor(),
                                 width: 1,
                               ),
                             ),
                             child: Text(
-                              booking.paymentStatusDisplayName,
+                              booking.statusDisplayName,
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
                                   ?.copyWith(
-                                    color: _getPaymentStatusColor(),
+                                    color: _getStatusColor(),
                                     fontWeight: FontWeight.w600,
                                     fontSize: 10,
                                   ),
@@ -355,19 +355,6 @@ class BookingCard extends StatelessWidget {
         return AppColors.errorRed;
       case BookingStatus.completed:
         return AppColors.primaryBlue;
-    }
-  }
-
-  Color _getPaymentStatusColor() {
-    switch (booking.paymentStatus) {
-      case PaymentStatus.pending:
-        return AppColors.warningYellow;
-      case PaymentStatus.paid:
-        return AppColors.successGreen;
-      case PaymentStatus.failed:
-        return AppColors.errorRed;
-      case PaymentStatus.refunded:
-        return AppColors.secondaryText;
     }
   }
 }

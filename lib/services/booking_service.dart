@@ -15,8 +15,10 @@ class BookingService {
     required String roomId,
     required DateTime checkInDate,
     required DateTime checkOutDate,
+    required String checkInTime,
+    required String checkOutTime,
     required int numberOfGuests,
-    required double totalAmount,
+    String? purpose,
   }) async {
     try {
       // Check room availability first
@@ -32,6 +34,11 @@ class BookingService {
         throw 'Room not found.';
       }
 
+      // Check capacity
+      if (numberOfGuests > room.maxGuests) {
+        throw 'Number of guests exceeds room capacity (${room.maxGuests} people).';
+      }
+
       final bookingId = _uuid.v4();
       final booking = BookingModel(
         id: bookingId,
@@ -39,11 +46,12 @@ class BookingService {
         roomId: roomId,
         checkInDate: checkInDate,
         checkOutDate: checkOutDate,
+        checkInTime: checkInTime,
+        checkOutTime: checkOutTime,
         numberOfGuests: numberOfGuests,
-        totalAmount: totalAmount,
-        status: BookingStatus.pending,
-        paymentStatus: PaymentStatus.pending,
+        status: BookingStatus.confirmed, // Directly confirmed without payment
         createdAt: DateTime.now(),
+        purpose: purpose,
         roomName: room.name,
         roomLocation: room.location,
         roomImageUrl: room.primaryImageUrl,
@@ -56,43 +64,6 @@ class BookingService {
       return bookingId;
     } catch (e) {
       throw 'Error creating booking: $e';
-    }
-  }
-
-  // Update booking payment status
-  static Future<void> updateBookingPayment({
-    required String bookingId,
-    required PaymentStatus paymentStatus,
-    String? paymentId,
-    String? razorpayOrderId,
-    String? razorpayPaymentId,
-    String? razorpaySignature,
-  }) async {
-    try {
-      Map<String, dynamic> updateData = {
-        'paymentStatus': paymentStatus.name,
-        'updatedAt': DateTime.now().millisecondsSinceEpoch,
-      };
-
-      if (paymentId != null) updateData['paymentId'] = paymentId;
-      if (razorpayOrderId != null)
-        updateData['razorpayOrderId'] = razorpayOrderId;
-      if (razorpayPaymentId != null)
-        updateData['razorpayPaymentId'] = razorpayPaymentId;
-      if (razorpaySignature != null)
-        updateData['razorpaySignature'] = razorpaySignature;
-
-      // If payment is successful, confirm the booking
-      if (paymentStatus == PaymentStatus.paid) {
-        updateData['status'] = BookingStatus.confirmed.name;
-      }
-
-      await _firestore
-          .collection(_collection)
-          .doc(bookingId)
-          .update(updateData);
-    } catch (e) {
-      throw 'Error updating booking payment: $e';
     }
   }
 
@@ -189,17 +160,59 @@ class BookingService {
     }
   }
 
-  // Calculate total price for booking
-  static double calculateTotalPrice({
-    required double pricePerNight,
-    required DateTime checkInDate,
-    required DateTime checkOutDate,
-  }) {
-    final numberOfNights = checkOutDate.difference(checkInDate).inDays;
-    if (numberOfNights <= 0) {
-      throw 'Check-out date must be after check-in date';
+  // Check time slot availability for a room on specific date
+  static Future<bool> isTimeSlotAvailable({
+    required String roomId,
+    required DateTime date,
+    required String startTime,
+    required String endTime,
+    String? excludeBookingId,
+  }) async {
+    try {
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+
+      QuerySnapshot snapshot = await _firestore
+          .collection(_collection)
+          .where('roomId', isEqualTo: roomId)
+          .where('checkInDate',
+              isLessThanOrEqualTo: endOfDay.millisecondsSinceEpoch)
+          .where('checkOutDate',
+              isGreaterThanOrEqualTo: startOfDay.millisecondsSinceEpoch)
+          .where('status', whereIn: ['pending', 'confirmed']).get();
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        if (excludeBookingId != null && doc.id == excludeBookingId) continue;
+        
+        // Check time overlap
+        final bookedStart = data['checkInTime'] as String;
+        final bookedEnd = data['checkOutTime'] as String;
+        
+        if (_isTimeOverlap(startTime, endTime, bookedStart, bookedEnd)) {
+          return false;
+        }
+      }
+      return true;
+    } catch (e) {
+      throw 'Error checking time slot availability: $e';
     }
-    return pricePerNight * numberOfNights;
+  }
+
+  // Helper method to check time overlap
+  static bool _isTimeOverlap(String start1, String end1, String start2, String end2) {
+    final start1Min = _timeToMinutes(start1);
+    final end1Min = _timeToMinutes(end1);
+    final start2Min = _timeToMinutes(start2);
+    final end2Min = _timeToMinutes(end2);
+    
+    return !(end1Min <= start2Min || start1Min >= end2Min);
+  }
+
+  // Convert time string (HH:mm) to minutes since midnight
+  static int _timeToMinutes(String time) {
+    final parts = time.split(':');
+    return int.parse(parts[0]) * 60 + int.parse(parts[1]);
   }
 
   // Get booking statistics (Admin function)
@@ -223,21 +236,17 @@ class BookingService {
           .where('status', isEqualTo: BookingStatus.cancelled.name)
           .get();
 
-      // Calculate total revenue from paid bookings
-      double totalRevenue = 0;
-      for (var doc in allBookings.docs) {
-        final data = doc.data() as Map<String, dynamic>;
-        if (data['paymentStatus'] == PaymentStatus.paid.name) {
-          totalRevenue += (data['totalAmount'] ?? 0.0).toDouble();
-        }
-      }
+      QuerySnapshot completedBookings = await _firestore
+          .collection(_collection)
+          .where('status', isEqualTo: BookingStatus.completed.name)
+          .get();
 
       return {
         'totalBookings': allBookings.size,
         'confirmedBookings': confirmedBookings.size,
         'pendingBookings': pendingBookings.size,
         'cancelledBookings': cancelledBookings.size,
-        'totalRevenue': totalRevenue,
+        'completedBookings': completedBookings.size,
       };
     } catch (e) {
       throw 'Error fetching booking statistics: $e';

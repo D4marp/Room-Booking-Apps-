@@ -157,7 +157,7 @@ class RoomCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          room.formattedPrice,
+                          room.capacityInfo,
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
                                     color: Colors.white,
@@ -402,7 +402,7 @@ class CompactRoomCard extends StatelessWidget {
                           ),
                         const Spacer(),
                         Text(
-                          room.formattedPrice,
+                          room.capacityInfo,
                           style:
                               Theme.of(context).textTheme.titleSmall?.copyWith(
                                     color: AppColors.primaryBlue,

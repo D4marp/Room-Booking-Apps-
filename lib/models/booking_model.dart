@@ -5,29 +5,19 @@ enum BookingStatus {
   completed,
 }
 
-enum PaymentStatus {
-  pending,
-  paid,
-  failed,
-  refunded,
-}
-
 class BookingModel {
   final String id;
   final String userId;
   final String roomId;
   final DateTime checkInDate;
   final DateTime checkOutDate;
+  final String checkInTime;  // Format: "HH:mm" e.g., "14:00"
+  final String checkOutTime; // Format: "HH:mm" e.g., "11:00"
   final int numberOfGuests;
-  final double totalAmount;
   final BookingStatus status;
-  final PaymentStatus paymentStatus;
-  final String? paymentId;
-  final String? razorpayOrderId;
-  final String? razorpayPaymentId;
-  final String? razorpaySignature;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final String? purpose; // Purpose of booking (meeting, class, event, etc.)
 
   // Additional room details for display
   final String? roomName;
@@ -40,16 +30,13 @@ class BookingModel {
     required this.roomId,
     required this.checkInDate,
     required this.checkOutDate,
+    required this.checkInTime,
+    required this.checkOutTime,
     required this.numberOfGuests,
-    required this.totalAmount,
     required this.status,
-    required this.paymentStatus,
-    this.paymentId,
-    this.razorpayOrderId,
-    this.razorpayPaymentId,
-    this.razorpaySignature,
     required this.createdAt,
     this.updatedAt,
+    this.purpose,
     this.roomName,
     this.roomLocation,
     this.roomImageUrl,
@@ -64,24 +51,18 @@ class BookingModel {
           DateTime.fromMillisecondsSinceEpoch(json['checkInDate'] ?? 0),
       checkOutDate:
           DateTime.fromMillisecondsSinceEpoch(json['checkOutDate'] ?? 0),
+      checkInTime: json['checkInTime'] ?? '08:00',
+      checkOutTime: json['checkOutTime'] ?? '17:00',
       numberOfGuests: json['numberOfGuests'] ?? 1,
-      totalAmount: (json['totalAmount'] ?? 0.0).toDouble(),
       status: BookingStatus.values.firstWhere(
         (e) => e.name == json['status'],
         orElse: () => BookingStatus.pending,
       ),
-      paymentStatus: PaymentStatus.values.firstWhere(
-        (e) => e.name == json['paymentStatus'],
-        orElse: () => PaymentStatus.pending,
-      ),
-      paymentId: json['paymentId'],
-      razorpayOrderId: json['razorpayOrderId'],
-      razorpayPaymentId: json['razorpayPaymentId'],
-      razorpaySignature: json['razorpaySignature'],
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
       updatedAt: json['updatedAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'])
           : null,
+      purpose: json['purpose'],
       roomName: json['roomName'],
       roomLocation: json['roomLocation'],
       roomImageUrl: json['roomImageUrl'],
@@ -95,16 +76,13 @@ class BookingModel {
       'roomId': roomId,
       'checkInDate': checkInDate.millisecondsSinceEpoch,
       'checkOutDate': checkOutDate.millisecondsSinceEpoch,
+      'checkInTime': checkInTime,
+      'checkOutTime': checkOutTime,
       'numberOfGuests': numberOfGuests,
-      'totalAmount': totalAmount,
       'status': status.name,
-      'paymentStatus': paymentStatus.name,
-      'paymentId': paymentId,
-      'razorpayOrderId': razorpayOrderId,
-      'razorpayPaymentId': razorpayPaymentId,
-      'razorpaySignature': razorpaySignature,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt?.millisecondsSinceEpoch,
+      'purpose': purpose,
       'roomName': roomName,
       'roomLocation': roomLocation,
       'roomImageUrl': roomImageUrl,
@@ -117,16 +95,13 @@ class BookingModel {
     String? roomId,
     DateTime? checkInDate,
     DateTime? checkOutDate,
+    String? checkInTime,
+    String? checkOutTime,
     int? numberOfGuests,
-    double? totalAmount,
     BookingStatus? status,
-    PaymentStatus? paymentStatus,
-    String? paymentId,
-    String? razorpayOrderId,
-    String? razorpayPaymentId,
-    String? razorpaySignature,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? purpose,
     String? roomName,
     String? roomLocation,
     String? roomImageUrl,
@@ -137,16 +112,13 @@ class BookingModel {
       roomId: roomId ?? this.roomId,
       checkInDate: checkInDate ?? this.checkInDate,
       checkOutDate: checkOutDate ?? this.checkOutDate,
+      checkInTime: checkInTime ?? this.checkInTime,
+      checkOutTime: checkOutTime ?? this.checkOutTime,
       numberOfGuests: numberOfGuests ?? this.numberOfGuests,
-      totalAmount: totalAmount ?? this.totalAmount,
       status: status ?? this.status,
-      paymentStatus: paymentStatus ?? this.paymentStatus,
-      paymentId: paymentId ?? this.paymentId,
-      razorpayOrderId: razorpayOrderId ?? this.razorpayOrderId,
-      razorpayPaymentId: razorpayPaymentId ?? this.razorpayPaymentId,
-      razorpaySignature: razorpaySignature ?? this.razorpaySignature,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      purpose: purpose ?? this.purpose,
       roomName: roomName ?? this.roomName,
       roomLocation: roomLocation ?? this.roomLocation,
       roomImageUrl: roomImageUrl ?? this.roomImageUrl,
@@ -154,9 +126,7 @@ class BookingModel {
   }
 
   // Computed properties
-  int get numberOfNights => checkOutDate.difference(checkInDate).inDays;
-
-  String get formattedTotalAmount => '₹${totalAmount.toStringAsFixed(0)}';
+  int get numberOfDays => checkOutDate.difference(checkInDate).inDays;
 
   String get statusDisplayName {
     switch (status) {
@@ -171,24 +141,21 @@ class BookingModel {
     }
   }
 
-  String get paymentStatusDisplayName {
-    switch (paymentStatus) {
-      case PaymentStatus.pending:
-        return 'Payment Pending';
-      case PaymentStatus.paid:
-        return 'Paid';
-      case PaymentStatus.failed:
-        return 'Payment Failed';
-      case PaymentStatus.refunded:
-        return 'Refunded';
-    }
-  }
-
   bool get canBeCancelled {
     return status == BookingStatus.pending || status == BookingStatus.confirmed;
   }
 
-  bool get isPaid {
-    return paymentStatus == PaymentStatus.paid;
+  bool get isActive {
+    return status == BookingStatus.confirmed;
+  }
+
+  String get formattedDateRange {
+    final startDate = '${checkInDate.day}/${checkInDate.month}/${checkInDate.year}';
+    final endDate = '${checkOutDate.day}/${checkOutDate.month}/${checkOutDate.year}';
+    return '$startDate - $endDate';
+  }
+
+  String get formattedTimeRange {
+    return '$checkInTime - $checkOutTime';
   }
 }

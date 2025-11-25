@@ -1,16 +1,27 @@
-# Bookify Rooms - Flutter Room Booking App
+# RoomBooking - Office & Campus Room Booking System
 
-A comprehensive Flutter application for room booking with Firebase backend, featuring modern UI design, payment integration, and real-time booking management.
+A free Flutter application for office and campus room booking with Firebase backend, featuring modern UI design, time-slot management, and real-time booking system.
 
 ## 🚀 Features
 
 ### Core Functionality
-- **User Authentication**: Email/Password and Google Sign-In
+- **User Authentication**: Email/Password authentication with role-based access control
+- **Admin Panel**: Full CRUD operations for managing rooms
 - **Room Browsing**: Beautiful room listings with search and filter
+- **Room Tab View**: View all rooms in separate tabs for easy comparison
+- **Office/Campus Focused**: Purpose-based bookings for meetings, classes, training, etc.
 - **Booking System**: Date selection, guest count, price calculation
 - **Payment Integration**: Razorpay payment gateway
 - **Booking Management**: View and manage bookings history
 - **User Profile**: Profile management and settings
+- **Real-time Status**: Live availability status (Available/Booked) for all rooms
+
+### Admin Features
+- **Room Management**: Add, edit, and delete rooms
+- **Availability Control**: Toggle room availability status
+- **Room Details**: Manage room name, description, class, price, capacity, location, and images
+- **Dashboard**: View all rooms with their current booking status
+- **Role-Based Access**: Admin panel only accessible to admin users
 
 ### Technical Features
 - **Firebase Backend**: Authentication, Firestore, Storage
@@ -47,6 +58,9 @@ A comprehensive Flutter application for room booking with Firebase backend, feat
    - Booking Screen
    - Booking History Screen
    - Profile Screen
+4. **Admin Panel** (Admin Users Only):
+   - Admin Rooms Screen: View and manage all rooms
+   - Add/Edit Room Screen: Create or modify room details
 
 ## 🛠 Technology Stack
 
@@ -80,27 +94,30 @@ A comprehensive Flutter application for room booking with Firebase backend, feat
 lib/
 ├── main.dart                 # App entry point
 ├── models/                   # Data models
-│   ├── user_model.dart
+│   ├── user_model.dart       # User with role-based access (user/admin)
 │   ├── room_model.dart
 │   └── booking_model.dart
 ├── services/                 # Firebase services
-│   ├── auth_service.dart
-│   ├── room_service.dart
+│   ├── auth_service.dart     # Authentication with role assignment
+│   ├── room_service.dart     # Room CRUD operations
 │   └── booking_service.dart
 ├── providers/                # State management
 │   ├── auth_provider.dart
-│   ├── room_provider.dart
+│   ├── room_provider.dart    # Admin CRUD methods
 │   └── booking_provider.dart
 ├── screens/                  # UI screens
 │   ├── splash_screen.dart
 │   ├── auth/
 │   ├── home/
 │   ├── room/
-│   └── booking/
+│   ├── booking/
+│   └── admin/                # Admin panel
+│       ├── admin_rooms_screen.dart
+│       └── add_edit_room_screen.dart
 ├── widgets/                  # Reusable widgets
 │   ├── custom_button.dart
 │   ├── custom_text_field.dart
-│   ├── room_card.dart
+│   ├── room_card.dart        # With availability badge
 │   └── booking_card.dart
 └── utils/                    # Utilities
     └── app_theme.dart
@@ -142,6 +159,29 @@ lib/
    ```bash
    flutter run
    ```
+
+### Creating an Admin User
+
+By default, all new users are created with "user" role. To create an admin user:
+
+1. **Sign up a new user** through the app
+2. **Go to Firebase Console** → Firestore Database
+3. **Find the user document** in the `users` collection
+4. **Edit the document** and change the `role` field from `"user"` to `"admin"`
+5. **Restart the app** and log in with that user
+6. **Admin Panel button** will now appear in the Profile screen
+
+Alternatively, you can manually create a user document with admin role:
+```json
+{
+  "id": "user-uid",
+  "name": "Admin User",
+  "email": "admin@example.com",
+  "role": "admin",
+  "createdAt": 1234567890000,
+  "updatedAt": 1234567890000
+}
+```
 
 ## 🚀 Deployment
 
@@ -189,6 +229,10 @@ The app uses Razorpay for secure payment processing:
 - [ ] Social login options
 - [ ] Offline support
 - [ ] Dark mode theme
+- [ ] Admin booking management screen
+- [ ] Dashboard statistics for admin
+- [ ] Bulk room operations
+- [ ] Export reports
 
 ## 📄 License
 

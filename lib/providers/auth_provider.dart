@@ -202,6 +202,24 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Set user role
+  Future<void> setUserRole(String roleString) async {
+    if (_user == null) return;
+
+    try {
+      final userDoc = await AuthService.getUserDocument(_user!.uid);
+      if (userDoc != null) {
+        final role = roleString == 'admin' ? UserRole.admin : UserRole.user;
+        final updatedUser = userDoc.copyWith(role: role);
+        await AuthService.updateUserDocument(updatedUser);
+        _userModel = updatedUser;
+        notifyListeners();
+      }
+    } catch (e) {
+      _setError(e.toString());
+    }
+  }
+
   // Helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;

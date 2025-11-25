@@ -13,8 +13,6 @@ class RoomProvider extends ChangeNotifier {
   String _searchQuery = '';
   String? _selectedCity;
   bool? _hasACFilter;
-  double? _minPrice;
-  double? _maxPrice;
 
   // Getters
   List<RoomModel> get rooms => _filteredRooms;
@@ -25,8 +23,6 @@ class RoomProvider extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   String? get selectedCity => _selectedCity;
   bool? get hasACFilter => _hasACFilter;
-  double? get minPrice => _minPrice;
-  double? get maxPrice => _maxPrice;
 
   RoomProvider() {
     _loadInitialData();
@@ -101,12 +97,7 @@ class RoomProvider extends ChangeNotifier {
     _applyFilters();
   }
 
-  // Filter rooms by price range
-  void filterByPriceRange(double? minPrice, double? maxPrice) {
-    _minPrice = minPrice;
-    _maxPrice = maxPrice;
-    _applyFilters();
-  }
+
 
   // Apply all filters
   void _applyFilters() {
@@ -123,14 +114,6 @@ class RoomProvider extends ChangeNotifier {
     // Apply AC filter
     if (_hasACFilter != null) {
       filtered = filtered.where((room) => room.hasAC == _hasACFilter).toList();
-    }
-
-    // Apply price filter
-    if (_minPrice != null) {
-      filtered = filtered.where((room) => room.price >= _minPrice!).toList();
-    }
-    if (_maxPrice != null) {
-      filtered = filtered.where((room) => room.price <= _maxPrice!).toList();
     }
 
     // Apply search query filter
@@ -154,8 +137,6 @@ class RoomProvider extends ChangeNotifier {
     _searchQuery = '';
     _selectedCity = null;
     _hasACFilter = null;
-    _minPrice = null;
-    _maxPrice = null;
     _applyFilters();
   }
 
@@ -233,19 +214,81 @@ class RoomProvider extends ChangeNotifier {
   bool get hasActiveFilters {
     return _searchQuery.isNotEmpty ||
         _selectedCity != null ||
-        _hasACFilter != null ||
-        _minPrice != null ||
-        _maxPrice != null;
+        _hasACFilter != null;
   }
 
-  // Get price range for slider
-  Map<String, double> get priceRange {
-    if (_rooms.isEmpty) return {'min': 0, 'max': 10000};
+  // Get capacity range for filtering
+  Map<String, int> get capacityRange {
+    if (_rooms.isEmpty) return {'min': 0, 'max': 100};
 
-    final prices = _rooms.map((room) => room.price).toList();
+    final capacities = _rooms.map((room) => room.maxGuests).toList();
     return {
-      'min': prices.reduce((a, b) => a < b ? a : b),
-      'max': prices.reduce((a, b) => a > b ? a : b),
+      'min': capacities.reduce((a, b) => a < b ? a : b),
+      'max': capacities.reduce((a, b) => a > b ? a : b),
     };
+  }
+
+  // Admin: Fetch all rooms
+  Future<void> fetchRooms() async {
+    await loadRooms();
+  }
+
+  // Admin: Add new room
+  Future<void> addRoom(Map<String, dynamic> roomData) async {
+    try {
+      _setLoading(true);
+      _clearError();
+      
+      await RoomService.addRoomFromMap(roomData);
+      await loadRooms(); // Refresh list
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Admin: Update room
+  Future<void> updateRoom(String roomId, Map<String, dynamic> roomData) async {
+    try {
+      _setLoading(true);
+      _clearError();
+      
+      await RoomService.updateRoomFromMap(roomId, roomData);
+      await loadRooms(); // Refresh list
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Admin: Delete room
+  Future<void> deleteRoom(String roomId) async {
+    try {
+      _setLoading(true);
+      _clearError();
+      
+      await RoomService.deleteRoom(roomId);
+      await loadRooms(); // Refresh list
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  // Admin: Toggle room availability
+  Future<void> toggleRoomAvailability(String roomId, bool isAvailable) async {
+    try {
+      await RoomService.updateRoomFromMap(roomId, {'isAvailable': isAvailable});
+      await loadRooms(); // Refresh list
+    } catch (e) {
+      _setError(e.toString());
+      rethrow;
+    }
   }
 }

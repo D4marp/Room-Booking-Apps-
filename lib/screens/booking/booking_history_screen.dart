@@ -332,8 +332,6 @@ class _BookingDetailsSheet extends StatelessWidget {
                     // Booking ID and Status
                     _buildDetailRow('Booking ID', booking.id),
                     _buildDetailRow('Status', booking.statusDisplayName),
-                    _buildDetailRow(
-                        'Payment Status', booking.paymentStatusDisplayName),
 
                     const Divider(height: AppSpacing.xl),
 
@@ -351,16 +349,10 @@ class _BookingDetailsSheet extends StatelessWidget {
                         'Check-in', _formatDate(booking.checkInDate)),
                     _buildDetailRow(
                         'Check-out', _formatDate(booking.checkOutDate)),
-                    _buildDetailRow('Nights', '${booking.numberOfNights}'),
+                    _buildDetailRow('Duration', '${booking.numberOfDays} ${booking.numberOfDays > 1 ? 'days' : 'day'}'),
                     _buildDetailRow('Guests', '${booking.numberOfGuests}'),
-
-                    const Divider(height: AppSpacing.xl),
-
-                    // Payment Details
-                    _buildDetailRow(
-                        'Total Amount', booking.formattedTotalAmount),
-                    if (booking.razorpayPaymentId != null)
-                      _buildDetailRow('Payment ID', booking.razorpayPaymentId!),
+                    if (booking.purpose != null && booking.purpose!.isNotEmpty)
+                      _buildDetailRow('Purpose', booking.purpose!),
 
                     const SizedBox(height: AppSpacing.xl),
                   ],

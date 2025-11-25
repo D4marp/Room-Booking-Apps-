@@ -7,7 +7,6 @@ import 'screens/splash_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/room_provider.dart';
 import 'providers/booking_provider.dart';
-import 'services/sample_data_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -18,13 +17,9 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Initialize sample room data (using free images)
-  try {
-    await SampleDataService.initializeSampleData();
-  } catch (e) {
-    print('Note: Sample data initialization will happen after authentication');
-  }
-
+  // Note: Sample room data is now added via admin panel after login
+  // Disabled automatic initialization due to Firestore security rules
+  
   runApp(const BookifyRoomsApp());
 }
 

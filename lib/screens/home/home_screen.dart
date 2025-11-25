@@ -3,14 +3,15 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/room_provider.dart';
-import '../../services/sample_data_service.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/room_card.dart';
 import '../../widgets/filter_bottom_sheet.dart';
 import '../room/room_details_screen.dart';
+import '../room/rooms_tab_view_screen.dart';
 import '../profile/profile_screen.dart';
 import '../booking/booking_history_screen.dart';
+import '../admin/admin_rooms_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,9 +34,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final roomProvider = Provider.of<RoomProvider>(context, listen: false);
       roomProvider.loadRooms();
-
-      // Initialize sample data if needed (for demo purposes)
-      _initializeSampleDataIfNeeded();
     });
   }
 
@@ -46,14 +44,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // Initialize sample data for demo purposes
-  Future<void> _initializeSampleDataIfNeeded() async {
-    try {
-      await SampleDataService.initializeSampleData();
-    } catch (e) {
-      print('Sample data initialization: $e');
-    }
-  }
+  // Sample data is now added via admin panel after login
+  // See README_SETUP.md for instructions on how to add sample data
 
   void _onBottomNavTap(int index) {
     setState(() {
@@ -106,6 +98,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildHeader() {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
+        // Get name from userModel or Firebase Auth user
+        final userName = authProvider.userModel?.name ?? 
+                        authProvider.user?.displayName ?? 
+                        authProvider.user?.email?.split('@').first ?? 
+                        'User';
+
         return Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
           child: Row(
@@ -115,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello ${authProvider.userModel?.name ?? 'User'}! 👋',
+                      'Hello $userName! 👋',
                       style:
                           Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 color: Colors.white,
@@ -132,6 +130,72 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ],
                 ),
               ),
+              const SizedBox(width: AppSpacing.sm),
+              // Tab View Button
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.tab,
+                    color: AppColors.primaryBlue,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RoomsTabViewScreen(),
+                      ),
+                    );
+                  },
+                  tooltip: 'View Rooms by Tab',
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              // Admin Mode Button (only show if user is admin)
+              if (authProvider.userModel?.isAdmin == true)
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryBlue,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.admin_panel_settings,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AdminRoomsScreen(),
+                        ),
+                      );
+                    },
+                    tooltip: 'Admin Panel',
+                  ),
+                ),
+              const SizedBox(width: AppSpacing.sm),
               Container(
                 width: 50,
                 height: 50,

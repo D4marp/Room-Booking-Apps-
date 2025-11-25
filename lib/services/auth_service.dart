@@ -1,11 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 
 class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
-  static final GoogleSignIn _googleSignIn = GoogleSignIn();
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Get current user
@@ -60,53 +58,15 @@ class AuthService {
     }
   }
 
-  // Sign in with Google
+  // Sign in with Google (disabled - use email/password instead)
   static Future<UserCredential?> signInWithGoogle() async {
-    try {
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
-      if (googleUser == null) {
-        throw 'Google sign in was cancelled.';
-      }
-
-      // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // Create a new credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Once signed in, return the UserCredential
-      UserCredential userCredential =
-          await _auth.signInWithCredential(credential);
-
-      // Create user document in Firestore if it's a new user
-      if (userCredential.additionalUserInfo?.isNewUser == true) {
-        await _createUserDocument(
-          userCredential.user!,
-          userCredential.user!.displayName ?? 'User',
-        );
-      }
-
-      return userCredential;
-    } on FirebaseAuthException catch (e) {
-      throw _handleAuthException(e);
-    } catch (e) {
-      throw 'An unexpected error occurred during Google sign in.';
-    }
+    throw 'Google Sign-In is currently disabled. Please use email/password login.';
   }
 
   // Sign out
   static Future<void> signOut() async {
     try {
-      await Future.wait([
-        _auth.signOut(),
-        _googleSignIn.signOut(),
-      ]);
+      await _auth.signOut();
     } catch (e) {
       throw 'Error signing out. Please try again.';
     }
@@ -170,18 +130,16 @@ class AuthService {
   // Create user document in Firestore
   static Future<void> _createUserDocument(User user, String name) async {
     try {
-      final userModel = UserModel(
-        id: user.uid,
-        name: name,
-        email: user.email ?? '',
-        profileImage: user.photoURL,
-        createdAt: DateTime.now(),
-      );
-
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .set(userModel.toJson());
+      // Create user document with default 'user' role
+      await _firestore.collection('users').doc(user.uid).set({
+        'id': user.uid,
+        'name': name,
+        'email': user.email ?? '',
+        'profileImage': user.photoURL,
+        'role': 'user', // Default to regular user
+        'createdAt': DateTime.now().millisecondsSinceEpoch,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      });
     } catch (e) {
       // Don't throw here as user is already created
       print('Error creating user document: $e');

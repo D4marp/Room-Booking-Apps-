@@ -26,6 +26,7 @@ class _SignUpScreenState extends State<SignUpScreen>
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _agreeToTerms = false;
+  String _selectedRole = 'user'; // Default role
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -91,9 +92,19 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
 
     if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      // Set the user role after signup
+      try {
+        await authProvider.setUserRole(_selectedRole);
+      } catch (e) {
+        print('Error setting role: $e');
+      }
+
+      // Navigate to home after role is set
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      }
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -235,6 +246,54 @@ class _SignUpScreenState extends State<SignUpScreen>
                                 }
                                 return null;
                               },
+                            ),
+
+                            const SizedBox(height: AppSpacing.md),
+
+                            // Role Selection
+                            Container(
+                              padding: const EdgeInsets.all(AppSpacing.md),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: AppColors.lightText,
+                                  width: 1.5,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.white,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Account Type',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.primaryText,
+                                        ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildRoleOption(
+                                          'user',
+                                          '👤 Regular User',
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.md),
+                                      Expanded(
+                                        child: _buildRoleOption(
+                                          'admin',
+                                          '👨‍💼 Admin',
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
 
                             const SizedBox(height: AppSpacing.md),
@@ -411,6 +470,59 @@ class _SignUpScreenState extends State<SignUpScreen>
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoleOption(String role, String label) {
+    final isSelected = _selectedRole == role;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedRole = role;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isSelected
+                ? AppColors.primaryBlue
+                : AppColors.lightText,
+            width: isSelected ? 2.5 : 1.5,
+          ),
+          borderRadius: BorderRadius.circular(10),
+          color: isSelected
+              ? AppColors.primaryBlue.withOpacity(0.05)
+              : Colors.transparent,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: isSelected
+                    ? FontWeight.bold
+                    : FontWeight.w500,
+                color: isSelected
+                    ? AppColors.primaryBlue
+                    : AppColors.secondaryText,
+              ),
+            ),
+            if (isSelected)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Icon(
+                  Icons.check_circle,
+                  color: AppColors.primaryBlue,
+                  size: 18,
+                ),
+              ),
+          ],
         ),
       ),
     );

@@ -13,6 +13,7 @@ class SampleDataService {
         'price': 5999.0,
         'location': 'Marine Drive',
         'city': 'Mumbai',
+        'roomClass': 'Suite',
         'imageUrls': [
           'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop',
@@ -39,6 +40,7 @@ class SampleDataService {
         'price': 4500.0,
         'location': 'Bandra Kurla Complex',
         'city': 'Mumbai',
+        'roomClass': 'Deluxe',
         'imageUrls': [
           'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop',
@@ -64,6 +66,7 @@ class SampleDataService {
         'price': 3500.0,
         'location': 'Juhu Beach',
         'city': 'Mumbai',
+        'roomClass': 'Family',
         'imageUrls': [
           'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=800&h=600&fit=crop',
@@ -90,6 +93,7 @@ class SampleDataService {
         'price': 2000.0,
         'location': 'Andheri East',
         'city': 'Mumbai',
+        'roomClass': 'Standard',
         'imageUrls': [
           'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1595576508898-0ad5c879a061?w=800&h=600&fit=crop',
@@ -114,6 +118,7 @@ class SampleDataService {
         'price': 12000.0,
         'location': 'Worli',
         'city': 'Mumbai',
+        'roomClass': 'Premium',
         'imageUrls': [
           'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
@@ -141,6 +146,7 @@ class SampleDataService {
         'price': 4800.0,
         'location': 'Connaught Place',
         'city': 'Delhi',
+        'roomClass': 'Deluxe',
         'imageUrls': [
           'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop',
@@ -165,6 +171,7 @@ class SampleDataService {
         'price': 3200.0,
         'location': 'IGI Airport Area',
         'city': 'Delhi',
+        'roomClass': 'Standard',
         'imageUrls': [
           'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop',
           'https://images.unsplash.com/photo-1586611292717-f828b167408c?w=800&h=600&fit=crop',

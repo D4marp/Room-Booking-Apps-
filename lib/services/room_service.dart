@@ -84,9 +84,9 @@ class RoomService {
   // Filter rooms
   static Future<List<RoomModel>> filterRooms({
     bool? hasAC,
-    double? minPrice,
-    double? maxPrice,
     String? city,
+    String? roomClass,
+    int? minCapacity,
   }) async {
     try {
       Query query = _firestore
@@ -101,18 +101,20 @@ class RoomService {
         query = query.where('city', isEqualTo: city);
       }
 
+      if (roomClass != null && roomClass.isNotEmpty) {
+        query = query.where('roomClass', isEqualTo: roomClass);
+      }
+
       QuerySnapshot snapshot = await query.get();
       List<RoomModel> rooms = snapshot.docs
           .map((doc) => RoomModel.fromJson(
               {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
           .toList();
 
-      // Filter by price range (client-side filtering)
-      if (minPrice != null || maxPrice != null) {
+      // Filter by capacity (client-side filtering)
+      if (minCapacity != null) {
         rooms = rooms.where((room) {
-          if (minPrice != null && room.price < minPrice) return false;
-          if (maxPrice != null && room.price > maxPrice) return false;
-          return true;
+          return room.maxGuests >= minCapacity;
         }).toList();
       }
 
@@ -137,6 +139,33 @@ class RoomService {
     }
   }
 
+  // Add new room (Admin function) - accepts Map
+  static Future<String> addRoomFromMap(Map<String, dynamic> roomData) async {
+    try {
+      // Add timestamps
+      roomData['createdAt'] = DateTime.now().millisecondsSinceEpoch;
+      roomData['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
+      
+      // Convert single imageUrl to imageUrls list if needed
+      if (roomData.containsKey('imageUrl') && !roomData.containsKey('imageUrls')) {
+        roomData['imageUrls'] = [roomData['imageUrl']];
+        roomData.remove('imageUrl');
+      }
+      
+      // Set default values if not provided
+      roomData['amenities'] = roomData['amenities'] ?? [];
+      roomData['hasAC'] = roomData['hasAC'] ?? true;
+      roomData['location'] = roomData['location'] ?? roomData['city'] ?? '';
+      roomData['contactNumber'] = roomData['contactNumber'] ?? '';
+      roomData['maxGuests'] = roomData['maxGuests'] ?? roomData['capacity'] ?? 2;
+      
+      DocumentReference docRef = await _firestore.collection(_collection).add(roomData);
+      return docRef.id;
+    } catch (e) {
+      throw 'Error adding room: $e';
+    }
+  }
+
   // Add new room (Admin function)
   static Future<String> addRoom(RoomModel room) async {
     try {
@@ -145,6 +174,35 @@ class RoomService {
       return docRef.id;
     } catch (e) {
       throw 'Error adding room: $e';
+    }
+  }
+
+  // Update room (Admin function) - accepts Map
+  static Future<void> updateRoomFromMap(String roomId, Map<String, dynamic> roomData) async {
+    try {
+      // Add update timestamp
+      roomData['updatedAt'] = DateTime.now().millisecondsSinceEpoch;
+      
+      // Convert single imageUrl to imageUrls list if needed
+      if (roomData.containsKey('imageUrl') && !roomData.containsKey('imageUrls')) {
+        roomData['imageUrls'] = [roomData['imageUrl']];
+        roomData.remove('imageUrl');
+      }
+      
+      // Set location from city if not provided
+      if (roomData.containsKey('city') && !roomData.containsKey('location')) {
+        roomData['location'] = roomData['city'];
+      }
+      
+      // Map capacity to maxGuests if provided
+      if (roomData.containsKey('capacity') && !roomData.containsKey('maxGuests')) {
+        roomData['maxGuests'] = roomData['capacity'];
+        roomData.remove('capacity');
+      }
+      
+      await _firestore.collection(_collection).doc(roomId).update(roomData);
+    } catch (e) {
+      throw 'Error updating room: $e';
     }
   }
 

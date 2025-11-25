@@ -2,9 +2,9 @@ class RoomModel {
   final String id;
   final String name;
   final String description;
-  final double price;
   final String location;
   final String city;
+  final String roomClass; // Room category: Meeting Room, Class Room, Conference Room, etc.
   final List<String> imageUrls;
   final List<String> amenities;
   final bool hasAC;
@@ -13,14 +13,16 @@ class RoomModel {
   final String contactNumber;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final String? floor; // Floor number or location
+  final String? building; // Building name
 
   RoomModel({
     required this.id,
     required this.name,
     required this.description,
-    required this.price,
     required this.location,
     required this.city,
+    required this.roomClass,
     required this.imageUrls,
     required this.amenities,
     required this.hasAC,
@@ -29,6 +31,8 @@ class RoomModel {
     required this.contactNumber,
     required this.createdAt,
     this.updatedAt,
+    this.floor,
+    this.building,
   });
 
   factory RoomModel.fromJson(Map<String, dynamic> json) {
@@ -36,19 +40,21 @@ class RoomModel {
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       description: json['description'] ?? '',
-      price: (json['price'] ?? 0.0).toDouble(),
       location: json['location'] ?? '',
       city: json['city'] ?? '',
+      roomClass: json['roomClass'] ?? 'Meeting Room',
       imageUrls: List<String>.from(json['imageUrls'] ?? []),
       amenities: List<String>.from(json['amenities'] ?? []),
       hasAC: json['hasAC'] ?? false,
       isAvailable: json['isAvailable'] ?? true,
-      maxGuests: json['maxGuests'] ?? 2,
+      maxGuests: json['maxGuests'] ?? 10,
       contactNumber: json['contactNumber'] ?? '',
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
       updatedAt: json['updatedAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'])
           : null,
+      floor: json['floor'],
+      building: json['building'],
     );
   }
 
@@ -57,9 +63,9 @@ class RoomModel {
       'id': id,
       'name': name,
       'description': description,
-      'price': price,
       'location': location,
       'city': city,
+      'roomClass': roomClass,
       'imageUrls': imageUrls,
       'amenities': amenities,
       'hasAC': hasAC,
@@ -68,6 +74,8 @@ class RoomModel {
       'contactNumber': contactNumber,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt?.millisecondsSinceEpoch,
+      'floor': floor,
+      'building': building,
     };
   }
 
@@ -75,9 +83,9 @@ class RoomModel {
     String? id,
     String? name,
     String? description,
-    double? price,
     String? location,
     String? city,
+    String? roomClass,
     List<String>? imageUrls,
     List<String>? amenities,
     bool? hasAC,
@@ -86,14 +94,16 @@ class RoomModel {
     String? contactNumber,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? floor,
+    String? building,
   }) {
     return RoomModel(
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
-      price: price ?? this.price,
       location: location ?? this.location,
       city: city ?? this.city,
+      roomClass: roomClass ?? this.roomClass,
       imageUrls: imageUrls ?? this.imageUrls,
       amenities: amenities ?? this.amenities,
       hasAC: hasAC ?? this.hasAC,
@@ -102,12 +112,20 @@ class RoomModel {
       contactNumber: contactNumber ?? this.contactNumber,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      floor: floor ?? this.floor,
+      building: building ?? this.building,
     );
   }
 
-  String get formattedPrice => '₹${price.toStringAsFixed(0)}/night';
+  String get capacityInfo => 'Capacity: $maxGuests people';
 
-  double get pricePerNight => price;
+  String get locationInfo {
+    final parts = <String>[];
+    if (building != null && building!.isNotEmpty) parts.add(building!);
+    if (floor != null && floor!.isNotEmpty) parts.add('Floor $floor');
+    if (parts.isEmpty) return location;
+    return '${parts.join(', ')} - $location';
+  }
 
   String get primaryImageUrl => imageUrls.isNotEmpty ? imageUrls.first : '';
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-// import 'package:razorpay_flutter/razorpay_flutter.dart';  // Temporarily removed
 import '../../models/room_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/booking_provider.dart';
@@ -20,65 +19,86 @@ class BookingScreen extends StatefulWidget {
 }
 
 class _BookingScreenState extends State<BookingScreen> {
-  DateTime? _selectedDate;
+  DateTime? _checkInDate;
+  DateTime? _checkOutDate;
+  TimeOfDay _checkInTime = const TimeOfDay(hour: 8, minute: 0);
+  TimeOfDay _checkOutTime = const TimeOfDay(hour: 17, minute: 0);
   int _guestCount = 1;
-  // late Razorpay _razorpay;  // Temporarily commented for APK build
-  bool _isProcessingPayment = false;
+  bool _isBooking = false;
+  final TextEditingController _purposeController = TextEditingController();
+
+  @override
+  void dispose() {
+    _purposeController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    // Mock payment implementation - no Razorpay initialization needed
-    // _razorpay = Razorpay();
-    // _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    // _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    // _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    _checkInDate = DateTime.now().add(const Duration(days: 1));
+    _checkOutDate = DateTime.now().add(const Duration(days: 2));
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-    // _razorpay.clear();  // Commented out for mock implementation
-  }
+  // Book room - simplified
+  void _bookRoom() async {
+    if (_checkInDate == null || _checkOutDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select check-in and check-out dates'),
+          backgroundColor: AppColors.errorRed,
+        ),
+      );
+      return;
+    }
 
-  // Mock payment success handler
-  void _handleMockPaymentSuccess() async {
+    if (_checkOutDate!.isBefore(_checkInDate!)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Check-out date must be after check-in date'),
+          backgroundColor: AppColors.errorRed,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isBooking = true;
+    });
+
     final authProvider = context.read<AuthProvider>();
     final bookingProvider = context.read<BookingProvider>();
 
-    // Create booking through the provider
-    final userId = authProvider.user!.uid;
-    final roomId = widget.room.id;
-    final checkInDate = _selectedDate!;
-    final checkOutDate = _selectedDate!.add(const Duration(days: 1));
-    final numberOfGuests = _guestCount;
-    final totalAmount = _calculateTotalAmount();
-
     try {
+      final userId = authProvider.user!.uid;
+      final roomId = widget.room.id;
+      
+      // Format times as "HH:mm"
+      final checkInTimeStr = '${_checkInTime.hour.toString().padLeft(2, '0')}:${_checkInTime.minute.toString().padLeft(2, '0')}';
+      final checkOutTimeStr = '${_checkOutTime.hour.toString().padLeft(2, '0')}:${_checkOutTime.minute.toString().padLeft(2, '0')}';
+
       final bookingId = await bookingProvider.createBooking(
         userId: userId,
         roomId: roomId,
-        checkInDate: checkInDate,
-        checkOutDate: checkOutDate,
-        numberOfGuests: numberOfGuests,
-        totalAmount: totalAmount,
+        checkInDate: _checkInDate!,
+        checkOutDate: _checkOutDate!,
+        checkInTime: checkInTimeStr,
+        checkOutTime: checkOutTimeStr,
+        numberOfGuests: _guestCount,
+        purpose: _purposeController.text.trim().isNotEmpty ? _purposeController.text.trim() : null,
       );
 
       if (mounted && bookingId != null) {
         setState(() {
-          _isProcessingPayment = false;
+          _isBooking = false;
         });
-
-        // Show success dialog with mock payment ID
-        _showBookingConfirmationDialog(
-            bookingId, 'mock_payment_${DateTime.now().millisecondsSinceEpoch}');
+        _showBookingSuccessDialog(bookingId);
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _isProcessingPayment = false;
+          _isBooking = false;
         });
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Booking failed: $e'),
@@ -89,87 +109,7 @@ class _BookingScreenState extends State<BookingScreen> {
     }
   }
 
-  double _calculateTotalAmount() {
-    // Base price per night
-    double basePrice = widget.room.pricePerNight;
-
-    // Additional guest charges (if more than 2 guests)
-    double guestCharges = _guestCount > 2 ? (_guestCount - 2) * 500 : 0;
-
-    // Service charge (10%)
-    double serviceCharge = (basePrice + guestCharges) * 0.1;
-
-    // Tax (18% GST)
-    double tax = (basePrice + guestCharges + serviceCharge) * 0.18;
-
-    return basePrice + guestCharges + serviceCharge + tax;
-  }
-
-  void _showDatePicker() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().add(const Duration(days: 1)),
-      firstDate: DateTime.now().add(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primaryBlue,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: AppColors.primaryText,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
-
-  void _processPayment() async {
-    if (_selectedDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a check-in date'),
-          backgroundColor: AppColors.errorRed,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isProcessingPayment = true;
-    });
-
-    // Mock payment processing - simulate payment success after 2 seconds
-    try {
-      await Future.delayed(const Duration(seconds: 2));
-
-      // For demo purposes, always succeed
-      // In a real app with Razorpay, there would be actual payment processing here
-      _handleMockPaymentSuccess();
-    } catch (e) {
-      setState(() {
-        _isProcessingPayment = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment initialization failed: $e'),
-          backgroundColor: AppColors.errorRed,
-        ),
-      );
-    }
-  }
-
-  void _showBookingConfirmationDialog(String bookingId, String paymentId) {
+  void _showBookingSuccessDialog(String bookingId) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -204,7 +144,7 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Your booking has been confirmed. You will receive a confirmation email shortly.',
+                'Your room has been booked successfully.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: AppColors.secondaryText,
@@ -222,17 +162,17 @@ class _BookingScreenState extends State<BookingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Booking ID: $bookingId',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryText,
+                      'Booking ID',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: AppColors.secondaryText,
                           ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Payment ID: $paymentId',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.secondaryText,
+                      bookingId,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryText,
                           ),
                     ),
                   ],
@@ -241,14 +181,16 @@ class _BookingScreenState extends State<BookingScreen> {
             ],
           ),
           actions: [
-            CustomButton(
-              text: 'Go to My Bookings',
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                Navigator.of(context).pop(); // Go back to room details
-                Navigator.of(context).pop(); // Go back to home
-                // Navigate to bookings tab (you might need to handle this differently)
-              },
+            SizedBox(
+              width: double.infinity,
+              child: CustomButton(
+                text: 'Go to My Bookings',
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close dialog
+                  Navigator.of(context).pop(); // Back to room details
+                  Navigator.of(context).pop(); // Back to home
+                },
+              ),
             ),
           ],
         );
@@ -258,8 +200,6 @@ class _BookingScreenState extends State<BookingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final totalAmount = _calculateTotalAmount();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Book Room'),
@@ -272,27 +212,37 @@ class _BookingScreenState extends State<BookingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Room info card
+            // Room info
             _buildRoomInfoCard(),
 
+            const SizedBox(height: AppSpacing.xl),
+
+            // Check-in date & time
+            _buildCheckInSection(),
+
             const SizedBox(height: AppSpacing.lg),
 
-            // Date selection
-            _buildDateSelection(),
+            // Check-out date & time
+            _buildCheckOutSection(),
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Guest count
+            // Guests
             _buildGuestCountSection(),
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Price breakdown
-            _buildPriceBreakdown(),
+            // Purpose
+            _buildPurposeSection(),
+
+            const SizedBox(height: AppSpacing.xl),
+
+            // Total summary
+            _buildSummary(),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBookingButton(totalAmount),
+      bottomNavigationBar: _buildBookButton(),
     );
   }
 
@@ -326,11 +276,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   width: 80,
                   height: 80,
                   color: Colors.grey.shade200,
-                  child: const Icon(
-                    Icons.hotel,
-                    size: 30,
-                    color: AppColors.lightText,
-                  ),
+                  child: const Icon(Icons.hotel, size: 30),
                 );
               },
             ),
@@ -344,20 +290,21 @@ class _BookingScreenState extends State<BookingScreen> {
                   widget.room.name,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.primaryText,
                       ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${widget.room.location}, ${widget.room.city}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.secondaryText,
                       ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
-                  widget.room.formattedPrice,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  widget.room.capacityInfo,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: AppColors.primaryBlue,
                         fontWeight: FontWeight.bold,
                       ),
@@ -370,7 +317,7 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  Widget _buildDateSelection() {
+  Widget _buildCheckInSection() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -388,56 +335,189 @@ class _BookingScreenState extends State<BookingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Check-in Date',
+            'Check-in',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primaryText,
                 ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.md),
+          // Date
           InkWell(
-            onTap: _showDatePicker,
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _checkInDate ?? DateTime.now().add(const Duration(days: 1)),
+                firstDate: DateTime.now().add(const Duration(days: 1)),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (picked != null) {
+                setState(() {
+                  _checkInDate = picked;
+                  if (_checkOutDate != null && _checkOutDate!.isBefore(_checkInDate!)) {
+                    _checkOutDate = _checkInDate!.add(const Duration(days: 1));
+                  }
+                });
+              }
+            },
             child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.grey.shade300),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  const Icon(
-                    Icons.calendar_today,
-                    size: 20,
-                    color: AppColors.primaryBlue,
-                  ),
+                  const Icon(Icons.calendar_today, color: AppColors.primaryBlue, size: 20),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
-                    _selectedDate != null
-                        ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                        : 'Select check-in date',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: _selectedDate != null
-                              ? AppColors.primaryText
-                              : AppColors.secondaryText,
-                        ),
-                  ),
-                  const Spacer(),
-                  const Icon(
-                    Icons.arrow_forward_ios,
-                    size: 16,
-                    color: AppColors.secondaryText,
+                    _checkInDate != null
+                        ? 'Date: ${_checkInDate!.day}/${_checkInDate!.month}/${_checkInDate!.year}'
+                        : 'Select date',
+                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 ],
               ),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
+          // Time
+          InkWell(
+            onTap: () async {
+              final picked = await showTimePicker(
+                context: context,
+                initialTime: _checkInTime,
+              );
+              if (picked != null) {
+                setState(() {
+                  _checkInTime = picked;
+                });
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.schedule, color: AppColors.primaryBlue, size: 20),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'Time: ${_checkInTime.hour.toString().padLeft(2, '0')}:${_checkInTime.minute.toString().padLeft(2, '0')}',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCheckOutSection() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Text(
-            'Check-out: ${_selectedDate != null ? "${_selectedDate!.add(const Duration(days: 1)).day}/${_selectedDate!.add(const Duration(days: 1)).month}/${_selectedDate!.add(const Duration(days: 1)).year}" : "Select date first"}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.secondaryText,
+            'Check-out',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Date
+          InkWell(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _checkOutDate ?? DateTime.now().add(const Duration(days: 2)),
+                firstDate: (_checkInDate ?? DateTime.now()).add(const Duration(days: 1)),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (picked != null) {
+                setState(() {
+                  _checkOutDate = picked;
+                });
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today, color: AppColors.primaryBlue, size: 20),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    _checkOutDate != null
+                        ? 'Date: ${_checkOutDate!.day}/${_checkOutDate!.month}/${_checkOutDate!.year}'
+                        : 'Select date',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          // Time
+          InkWell(
+            onTap: () async {
+              final picked = await showTimePicker(
+                context: context,
+                initialTime: _checkOutTime,
+              );
+              if (picked != null) {
+                setState(() {
+                  _checkOutTime = picked;
+                });
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.md,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.schedule, color: AppColors.primaryBlue, size: 20),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    'Time: ${_checkOutTime.hour.toString().padLeft(2, '0')}:${_checkOutTime.minute.toString().padLeft(2, '0')}',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -458,96 +538,119 @@ class _BookingScreenState extends State<BookingScreen> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Number of Guests',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryText,
-                ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                onPressed: _guestCount > 1
-                    ? () {
-                        setState(() {
-                          _guestCount--;
-                        });
-                      }
-                    : null,
-                icon: Icon(
-                  Icons.remove_circle_outline,
-                  color: _guestCount > 1
-                      ? AppColors.primaryBlue
-                      : Colors.grey.shade400,
-                ),
+              Text(
+                'Number of Guests',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
-              Container(
-                width: 60,
-                alignment: Alignment.center,
-                child: Text(
-                  '$_guestCount',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primaryText,
-                      ),
-                ),
-              ),
-              IconButton(
-                onPressed: _guestCount < widget.room.maxGuests
-                    ? () {
-                        setState(() {
-                          _guestCount++;
-                        });
-                      }
-                    : null,
-                icon: Icon(
-                  Icons.add_circle_outline,
-                  color: _guestCount < widget.room.maxGuests
-                      ? AppColors.primaryBlue
-                      : Colors.grey.shade400,
-                ),
-              ),
-              const Spacer(),
+              const SizedBox(height: 4),
               Text(
                 'Max: ${widget.room.maxGuests}',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.secondaryText,
                     ),
               ),
             ],
           ),
-          if (_guestCount > 2)
-            Container(
-              margin: const EdgeInsets.only(top: AppSpacing.sm),
-              padding: const EdgeInsets.all(AppSpacing.sm),
-              decoration: BoxDecoration(
-                color: AppColors.primaryBlue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+          Row(
+            children: [
+              IconButton(
+                onPressed: _guestCount > 1
+                    ? () => setState(() => _guestCount--)
+                    : null,
+                icon: Icon(
+                  Icons.remove_circle_outline,
+                  color: _guestCount > 1
+                      ? AppColors.primaryBlue
+                      : Colors.grey.shade300,
+                ),
               ),
-              child: Text(
-                'Additional guest charges apply for more than 2 guests',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.primaryBlue,
+              Text(
+                '$_guestCount',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
               ),
-            ),
+              IconButton(
+                onPressed: _guestCount < widget.room.maxGuests
+                    ? () => setState(() => _guestCount++)
+                    : null,
+                icon: Icon(
+                  Icons.add_circle_outline,
+                  color: _guestCount < widget.room.maxGuests
+                      ? AppColors.primaryBlue
+                      : Colors.grey.shade300,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildPriceBreakdown() {
-    final basePrice = widget.room.pricePerNight;
-    final guestCharges = _guestCount > 2 ? (_guestCount - 2) * 500 : 0;
-    final serviceCharge = (basePrice + guestCharges) * 0.1;
-    final tax = (basePrice + guestCharges + serviceCharge) * 0.18;
-    final total = basePrice + guestCharges + serviceCharge + tax;
+  Widget _buildSummary() {
+    final days = _checkOutDate?.difference(_checkInDate ?? DateTime.now()).inDays ?? 0;
+    
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.primaryBlue.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primaryBlue.withOpacity(0.2),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Booking Duration',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppColors.secondaryText,
+                    ),
+              ),
+              Text(
+                '$days ${days != 1 ? 'days' : 'day'}',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Number of Guests',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppColors.secondaryText,
+                    ),
+              ),
+              Text(
+                '$_guestCount ${_guestCount > 1 ? 'guests' : 'guest'}',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildPurposeSection() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -556,7 +659,7 @@ class _BookingScreenState extends State<BookingScreen> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
@@ -565,72 +668,29 @@ class _BookingScreenState extends State<BookingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Price Breakdown',
+            'Purpose of Booking (Optional)',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primaryText,
                 ),
           ),
           const SizedBox(height: AppSpacing.md),
-          _buildPriceRow('Room (1 night)', '₹${basePrice.toStringAsFixed(0)}'),
-          if (guestCharges > 0)
-            _buildPriceRow(
-              'Additional guests (${_guestCount - 2})',
-              '₹${guestCharges.toStringAsFixed(0)}',
+          TextField(
+            controller: _purposeController,
+            maxLines: 3,
+            decoration: InputDecoration(
+              hintText: 'e.g., Team meeting, Training session, etc.',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              contentPadding: const EdgeInsets.all(AppSpacing.md),
             ),
-          _buildPriceRow(
-              'Service charge', '₹${serviceCharge.toStringAsFixed(0)}'),
-          _buildPriceRow('Tax (GST)', '₹${tax.toStringAsFixed(0)}'),
-          const Divider(height: AppSpacing.lg),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total Amount',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryText,
-                    ),
-              ),
-              Text(
-                '₹${total.toStringAsFixed(0)}',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryBlue,
-                    ),
-              ),
-            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPriceRow(String label, String amount) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.secondaryText,
-                ),
-          ),
-          Text(
-            amount,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.primaryText,
-                  fontWeight: FontWeight.w500,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBookingButton(double totalAmount) {
+  Widget _buildBookButton() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: const BoxDecoration(
@@ -645,12 +705,8 @@ class _BookingScreenState extends State<BookingScreen> {
       ),
       child: SafeArea(
         child: CustomButton(
-          text: _isProcessingPayment
-              ? 'Processing...'
-              : 'Pay ₹${totalAmount.toStringAsFixed(0)}',
-          onPressed: _isProcessingPayment || !widget.room.isAvailable
-              ? null
-              : _processPayment,
+          text: _isBooking ? 'Booking...' : 'Book Room',
+          onPressed: _isBooking ? null : _bookRoom,
           backgroundColor: widget.room.isAvailable
               ? AppColors.primaryBlue
               : Colors.grey.shade400,

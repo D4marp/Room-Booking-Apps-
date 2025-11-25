@@ -14,8 +14,6 @@ class FilterBottomSheet extends StatefulWidget {
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
   String? _selectedCity;
   bool? _hasAC;
-  RangeValues? _priceRange;
-  late Map<String, double> _availablePriceRange;
 
   @override
   void initState() {
@@ -25,15 +23,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     // Initialize with current filter values
     _selectedCity = roomProvider.selectedCity;
     _hasAC = roomProvider.hasACFilter;
-    _availablePriceRange = roomProvider.priceRange;
-
-    // Initialize price range
-    if (roomProvider.minPrice != null || roomProvider.maxPrice != null) {
-      _priceRange = RangeValues(
-        roomProvider.minPrice ?? _availablePriceRange['min']!,
-        roomProvider.maxPrice ?? _availablePriceRange['max']!,
-      );
-    }
   }
 
   void _applyFilters() {
@@ -42,13 +31,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     roomProvider.filterByCity(_selectedCity);
     roomProvider.filterByAC(_hasAC);
 
-    if (_priceRange != null) {
-      roomProvider.filterByPriceRange(
-        _priceRange!.start,
-        _priceRange!.end,
-      );
-    }
-
     Navigator.of(context).pop();
   }
 
@@ -56,7 +38,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     setState(() {
       _selectedCity = null;
       _hasAC = null;
-      _priceRange = null;
     });
   }
 
@@ -126,10 +107,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
                     // AC Filter
                     _buildACFilter(),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // Price Range Filter
-                    _buildPriceRangeFilter(),
                     const SizedBox(height: AppSpacing.xxl),
                   ],
                 ),
@@ -231,104 +208,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             });
           },
         ),
-      ],
-    );
-  }
-
-  Widget _buildPriceRangeFilter() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Price Range (per night)',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        if (_availablePriceRange['min'] != null &&
-            _availablePriceRange['max'] != null)
-          Column(
-            children: [
-              RangeSlider(
-                values: _priceRange ??
-                    RangeValues(
-                      _availablePriceRange['min']!,
-                      _availablePriceRange['max']!,
-                    ),
-                min: _availablePriceRange['min']!,
-                max: _availablePriceRange['max']!,
-                divisions: 20,
-                activeColor: AppColors.primaryBlue,
-                inactiveColor: AppColors.primaryBlue.withOpacity(0.2),
-                labels: RangeLabels(
-                  '₹${(_priceRange?.start ?? _availablePriceRange['min']!).round()}',
-                  '₹${(_priceRange?.end ?? _availablePriceRange['max']!).round()}',
-                ),
-                onChanged: (values) {
-                  setState(() {
-                    _priceRange = values;
-                  });
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '₹${_availablePriceRange['min']!.round()}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.secondaryText,
-                          ),
-                    ),
-                    Text(
-                      '₹${_availablePriceRange['max']!.round()}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.secondaryText,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Selected: ₹${(_priceRange?.start ?? _availablePriceRange['min']!).round()} - ₹${(_priceRange?.end ?? _availablePriceRange['max']!).round()}',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: AppColors.primaryBlue,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          )
-        else
-          Container(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                'No rooms available to set price range',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.secondaryText,
-                    ),
-              ),
-            ),
-          ),
       ],
     );
   }

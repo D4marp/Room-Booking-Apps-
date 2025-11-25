@@ -65,8 +65,10 @@ class BookingProvider extends ChangeNotifier {
     required String roomId,
     required DateTime checkInDate,
     required DateTime checkOutDate,
+    required String checkInTime,
+    required String checkOutTime,
     required int numberOfGuests,
-    required double totalAmount,
+    String? purpose,
   }) async {
     try {
       _setLoading(true);
@@ -77,45 +79,16 @@ class BookingProvider extends ChangeNotifier {
         roomId: roomId,
         checkInDate: checkInDate,
         checkOutDate: checkOutDate,
+        checkInTime: checkInTime,
+        checkOutTime: checkOutTime,
         numberOfGuests: numberOfGuests,
-        totalAmount: totalAmount,
+        purpose: purpose,
       );
 
       return bookingId;
     } catch (e) {
       _setError(e.toString());
       return null;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  // Update booking payment status
-  Future<bool> updateBookingPayment({
-    required String bookingId,
-    required PaymentStatus paymentStatus,
-    String? paymentId,
-    String? razorpayOrderId,
-    String? razorpayPaymentId,
-    String? razorpaySignature,
-  }) async {
-    try {
-      _setLoading(true);
-      _clearError();
-
-      await BookingService.updateBookingPayment(
-        bookingId: bookingId,
-        paymentStatus: paymentStatus,
-        paymentId: paymentId,
-        razorpayOrderId: razorpayOrderId,
-        razorpayPaymentId: razorpayPaymentId,
-        razorpaySignature: razorpaySignature,
-      );
-
-      return true;
-    } catch (e) {
-      _setError(e.toString());
-      return false;
     } finally {
       _setLoading(false);
     }
@@ -172,20 +145,8 @@ class BookingProvider extends ChangeNotifier {
   }
 
   // Calculate total price
-  double calculateTotalPrice(double pricePerNight) {
-    if (_selectedCheckInDate == null || _selectedCheckOutDate == null) {
-      return 0.0;
-    }
-
-    return BookingService.calculateTotalPrice(
-      pricePerNight: pricePerNight,
-      checkInDate: _selectedCheckInDate!,
-      checkOutDate: _selectedCheckOutDate!,
-    );
-  }
-
-  // Get number of nights
-  int get numberOfNights {
+  // Get number of days (office/campus booking context)
+  int get numberOfDays {
     if (_selectedCheckInDate == null || _selectedCheckOutDate == null) {
       return 0;
     }
@@ -219,12 +180,7 @@ class BookingProvider extends ChangeNotifier {
     return _userBookings.where((booking) => booking.status == status).toList();
   }
 
-  // Get bookings by payment status
-  List<BookingModel> getBookingsByPaymentStatus(PaymentStatus paymentStatus) {
-    return _userBookings
-        .where((booking) => booking.paymentStatus == paymentStatus)
-        .toList();
-  }
+
 
   // Refresh bookings
   Future<void> refreshBookings(String userId) async {

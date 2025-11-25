@@ -1,3 +1,5 @@
+enum UserRole { user, admin }
+
 class UserModel {
   final String id;
   final String name;
@@ -5,6 +7,7 @@ class UserModel {
   final String? profileImage;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final UserRole role;
 
   UserModel({
     required this.id,
@@ -13,6 +16,7 @@ class UserModel {
     this.profileImage,
     required this.createdAt,
     this.updatedAt,
+    this.role = UserRole.user,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -25,6 +29,7 @@ class UserModel {
       updatedAt: json['updatedAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'])
           : null,
+      role: json['role'] == 'admin' ? UserRole.admin : UserRole.user,
     );
   }
 
@@ -36,6 +41,7 @@ class UserModel {
       'profileImage': profileImage,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt?.millisecondsSinceEpoch,
+      'role': role == UserRole.admin ? 'admin' : 'user',
     };
   }
 
@@ -46,6 +52,7 @@ class UserModel {
     String? profileImage,
     DateTime? createdAt,
     DateTime? updatedAt,
+    UserRole? role,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -54,6 +61,9 @@ class UserModel {
       profileImage: profileImage ?? this.profileImage,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      role: role ?? this.role,
     );
   }
+
+  bool get isAdmin => role == UserRole.admin;
 }

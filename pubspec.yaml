@@ -1,5 +1,5 @@
 name: bookify_rooms
-description: "A modern room booking app built with Flutter and Firebase - Perfect for developer portfolio"
+description: "Office & Campus Room Booking System - Free room reservation app for offices and educational institutions"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -19,11 +19,11 @@ dependencies:
   provider: ^6.1.2
   
   # Firebase (Storage removed - using free image URLs)
-  firebase_core: ^2.31.1
-  firebase_auth: ^4.19.6
-  cloud_firestore: ^4.17.4
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.20.0
+  cloud_firestore: ^4.17.5
   # firebase_storage: ^11.7.6  # Commented out - using free images instead
-  google_sign_in: ^6.2.1
+  # google_sign_in: ^6.2.1  # Temporarily removed - causing iOS dependency conflicts
   
   # UI Components & Animation
   # carousel_slider: ^4.2.1  # Temporarily removed due to conflicts
@@ -40,11 +40,16 @@ dependencies:
   
   # Form Validation
   email_validator: ^2.1.17
+  
+  # IoT Integration & HTTP
+  dio: ^5.3.1
+  http: ^1.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -53,3 +58,13 @@ flutter:
     - assets/images/
     - assets/animations/
     - assets/icons/
+    - assets/icon/
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#2196F3"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  remove_alpha_ios: true

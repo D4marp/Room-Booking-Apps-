@@ -44,7 +44,7 @@ class RoomCard extends StatelessWidget {
                         child: const Center(
                           child: CircularProgressIndicator(
                             valueColor: AlwaysStoppedAnimation<Color>(
-                                AppColors.primaryBlue),
+                                AppColors.primaryRed),
                           ),
                         ),
                       ),
@@ -226,14 +226,14 @@ class RoomCard extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryBlue.withOpacity(0.1),
+                            color: AppColors.primaryRed.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             amenity,
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: AppColors.primaryBlue,
+                                      color: AppColors.primaryRed,
                                       fontSize: 10,
                                     ),
                           ),
@@ -405,7 +405,7 @@ class CompactRoomCard extends StatelessWidget {
                           room.capacityInfo,
                           style:
                               Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    color: AppColors.primaryBlue,
+                                    color: AppColors.primaryRed,
                                     fontWeight: FontWeight.bold,
                                   ),
                         ),

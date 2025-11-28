@@ -89,25 +89,6 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  Future<void> _handleGoogleLogin() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    final success = await authProvider.signInWithGoogle();
-
-    if (success && mounted) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Google sign-in failed'),
-          backgroundColor: AppColors.errorRed,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,7 +98,7 @@ class _LoginScreenState extends State<LoginScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppColors.lightBlue,
+              AppColors.primaryRedLight,
               AppColors.creamBackground,
             ],
           ),
@@ -139,25 +120,17 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Column(
                         children: [
                           Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.hotel,
-                              size: 40,
-                              color: AppColors.primaryBlue,
+                            width: 160,
+                            height: 160,
+                            child: Image.asset(
+                              'assets/images/roombooking.png',
+                              width: 160,
+                              height: 160,
+                              fit: BoxFit.contain,
                             ),
                           ),
+                          
+                          
                           const SizedBox(height: AppSpacing.lg),
                           Text(
                             'Welcome Back!',
@@ -166,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 .displaySmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryText,
+                                  color: const Color.fromARGB(255, 255, 255, 255),
                                 ),
                           ),
                           const SizedBox(height: AppSpacing.sm),
@@ -174,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen>
                             'Sign in to continue your booking journey',
                             style:
                                 Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: AppColors.secondaryText,
+                                      color: const Color.fromARGB(255, 255, 255, 255),
                                     ),
                             textAlign: TextAlign.center,
                           ),
@@ -255,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       _rememberMe = value ?? false;
                                     });
                                   },
-                                  activeColor: AppColors.primaryBlue,
+                                  activeColor: AppColors.primaryRed,
                                 ),
                                 const Text('Remember me'),
                                 const Spacer(),
@@ -271,7 +244,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   child: const Text(
                                     'Forgot Password?',
                                     style:
-                                        TextStyle(color: AppColors.primaryBlue),
+                                        TextStyle(color: AppColors.primaryRed),
                                   ),
                                 ),
                               ],
@@ -317,31 +290,40 @@ class _LoginScreenState extends State<LoginScreen>
 
                             const SizedBox(height: AppSpacing.lg),
 
-                            // Google Sign In Button
-                            Consumer<AuthProvider>(
-                              builder: (context, authProvider, child) {
-                                return OutlinedButton.icon(
-                                  onPressed: authProvider.isLoading
-                                      ? null
-                                      : _handleGoogleLogin,
-                                  icon: Image.asset(
-                                    'assets/images/google_logo.png', // You'll need to add this
-                                    width: 20,
-                                    height: 20,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.g_mobiledata,
-                                          size: 20);
-                                    },
+                            // Sign Up Prompt
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "Don't have account? ",
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: AppColors.secondaryText,
+                                      ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const SignUpScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Sign up',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: AppColors.primaryRed,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
-                                  label: const Text('Continue with Google'),
-                                  style: OutlinedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 16),
-                                    side:
-                                        BorderSide(color: Colors.grey.shade300),
-                                  ),
-                                );
-                              },
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -349,35 +331,6 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
 
                     const SizedBox(height: AppSpacing.lg),
-
-                    // Sign Up Link
-                    Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Don't have an account? ",
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const SignUpScreen(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                color: AppColors.primaryBlue,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),

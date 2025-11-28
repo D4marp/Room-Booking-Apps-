@@ -19,43 +19,39 @@ class BookingScreen extends StatefulWidget {
 }
 
 class _BookingScreenState extends State<BookingScreen> {
-  DateTime? _checkInDate;
-  DateTime? _checkOutDate;
-  TimeOfDay _checkInTime = const TimeOfDay(hour: 8, minute: 0);
-  TimeOfDay _checkOutTime = const TimeOfDay(hour: 17, minute: 0);
+  DateTime? _bookingDate;
+  TimeOfDay _startTime = const TimeOfDay(hour: 8, minute: 0);
+  int _durationMinutes = 60; // Default 60 minutes
   int _guestCount = 1;
   bool _isBooking = false;
   final TextEditingController _purposeController = TextEditingController();
+  final TextEditingController _customDurationController = TextEditingController();
 
   @override
   void dispose() {
     _purposeController.dispose();
+    _customDurationController.dispose();
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
-    _checkInDate = DateTime.now().add(const Duration(days: 1));
-    _checkOutDate = DateTime.now().add(const Duration(days: 2));
+    _bookingDate = DateTime.now().add(const Duration(days: 1));
   }
 
-  // Book room - simplified
-  void _bookRoom() async {
-    if (_checkInDate == null || _checkOutDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select check-in and check-out dates'),
-          backgroundColor: AppColors.errorRed,
-        ),
-      );
-      return;
-    }
+  TimeOfDay _calculateEndTime() {
+    final totalMinutes = _startTime.hour * 60 + _startTime.minute + _durationMinutes;
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    return TimeOfDay(hour: hours % 24, minute: minutes);
+  }
 
-    if (_checkOutDate!.isBefore(_checkInDate!)) {
+  void _bookRoom() async {
+    if (_bookingDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Check-out date must be after check-in date'),
+          content: Text('Please select booking date'),
           backgroundColor: AppColors.errorRed,
         ),
       );
@@ -74,16 +70,20 @@ class _BookingScreenState extends State<BookingScreen> {
       final roomId = widget.room.id;
       
       // Format times as "HH:mm"
-      final checkInTimeStr = '${_checkInTime.hour.toString().padLeft(2, '0')}:${_checkInTime.minute.toString().padLeft(2, '0')}';
-      final checkOutTimeStr = '${_checkOutTime.hour.toString().padLeft(2, '0')}:${_checkOutTime.minute.toString().padLeft(2, '0')}';
+      final startTimeStr = '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}';
+      final endTime = _calculateEndTime();
+      final endTimeStr = '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
+
+      // Same day for check-in and check-out
+      final checkOutDate = _bookingDate;
 
       final bookingId = await bookingProvider.createBooking(
         userId: userId,
         roomId: roomId,
-        checkInDate: _checkInDate!,
-        checkOutDate: _checkOutDate!,
-        checkInTime: checkInTimeStr,
-        checkOutTime: checkOutTimeStr,
+        checkInDate: _bookingDate!,
+        checkOutDate: checkOutDate!,
+        checkInTime: startTimeStr,
+        checkOutTime: endTimeStr,
         numberOfGuests: _guestCount,
         purpose: _purposeController.text.trim().isNotEmpty ? _purposeController.text.trim() : null,
       );
@@ -217,13 +217,18 @@ class _BookingScreenState extends State<BookingScreen> {
 
             const SizedBox(height: AppSpacing.xl),
 
-            // Check-in date & time
-            _buildCheckInSection(),
+            // Booking date
+            _buildBookingDateSection(),
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Check-out date & time
-            _buildCheckOutSection(),
+            // Start time
+            _buildStartTimeSection(),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // Duration options
+            _buildDurationSection(),
 
             const SizedBox(height: AppSpacing.lg),
 
@@ -305,7 +310,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 Text(
                   widget.room.capacityInfo,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColors.primaryBlue,
+                        color: AppColors.primaryRed,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
@@ -317,7 +322,7 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  Widget _buildCheckInSection() {
+  Widget _buildBookingDateSection() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -335,27 +340,23 @@ class _BookingScreenState extends State<BookingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Check-in',
+            'Booking Date',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
           ),
           const SizedBox(height: AppSpacing.md),
-          // Date
           InkWell(
             onTap: () async {
               final picked = await showDatePicker(
                 context: context,
-                initialDate: _checkInDate ?? DateTime.now().add(const Duration(days: 1)),
+                initialDate: _bookingDate ?? DateTime.now().add(const Duration(days: 1)),
                 firstDate: DateTime.now().add(const Duration(days: 1)),
                 lastDate: DateTime.now().add(const Duration(days: 365)),
               );
               if (picked != null) {
                 setState(() {
-                  _checkInDate = picked;
-                  if (_checkOutDate != null && _checkOutDate!.isBefore(_checkInDate!)) {
-                    _checkOutDate = _checkInDate!.add(const Duration(days: 1));
-                  }
+                  _bookingDate = picked;
                 });
               }
             },
@@ -370,47 +371,12 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.calendar_today, color: AppColors.primaryBlue, size: 20),
+                  const Icon(Icons.calendar_today, color: AppColors.primaryRed, size: 20),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
-                    _checkInDate != null
-                        ? 'Date: ${_checkInDate!.day}/${_checkInDate!.month}/${_checkInDate!.year}'
+                    _bookingDate != null
+                        ? '${_bookingDate!.day}/${_bookingDate!.month}/${_bookingDate!.year}'
                         : 'Select date',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Time
-          InkWell(
-            onTap: () async {
-              final picked = await showTimePicker(
-                context: context,
-                initialTime: _checkInTime,
-              );
-              if (picked != null) {
-                setState(() {
-                  _checkInTime = picked;
-                });
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.md,
-              ),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.schedule, color: AppColors.primaryBlue, size: 20),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'Time: ${_checkInTime.hour.toString().padLeft(2, '0')}:${_checkInTime.minute.toString().padLeft(2, '0')}',
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 ],
@@ -422,7 +388,7 @@ class _BookingScreenState extends State<BookingScreen> {
     );
   }
 
-  Widget _buildCheckOutSection() {
+  Widget _buildStartTimeSection() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -440,61 +406,21 @@ class _BookingScreenState extends State<BookingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Check-out',
+            'Start Time',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
           ),
           const SizedBox(height: AppSpacing.md),
-          // Date
-          InkWell(
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: _checkOutDate ?? DateTime.now().add(const Duration(days: 2)),
-                firstDate: (_checkInDate ?? DateTime.now()).add(const Duration(days: 1)),
-                lastDate: DateTime.now().add(const Duration(days: 365)),
-              );
-              if (picked != null) {
-                setState(() {
-                  _checkOutDate = picked;
-                });
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.md,
-              ),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today, color: AppColors.primaryBlue, size: 20),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    _checkOutDate != null
-                        ? 'Date: ${_checkOutDate!.day}/${_checkOutDate!.month}/${_checkOutDate!.year}'
-                        : 'Select date',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Time
           InkWell(
             onTap: () async {
               final picked = await showTimePicker(
                 context: context,
-                initialTime: _checkOutTime,
+                initialTime: _startTime,
               );
               if (picked != null) {
                 setState(() {
-                  _checkOutTime = picked;
+                  _startTime = picked;
                 });
               }
             },
@@ -509,10 +435,10 @@ class _BookingScreenState extends State<BookingScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.schedule, color: AppColors.primaryBlue, size: 20),
+                  const Icon(Icons.schedule, color: AppColors.primaryRed, size: 20),
                   const SizedBox(width: AppSpacing.sm),
                   Text(
-                    'Time: ${_checkOutTime.hour.toString().padLeft(2, '0')}:${_checkOutTime.minute.toString().padLeft(2, '0')}',
+                    '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}',
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 ],
@@ -520,6 +446,190 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDurationSection() {
+    final endTime = _calculateEndTime();
+    final endTimeStr = '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Duration',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Preset durations
+          Wrap(
+            spacing: AppSpacing.sm,
+            children: [
+              _durationButton(30, '30 min'),
+              _durationButton(60, '1 hour'),
+              _durationButton(90, '1.5 hours'),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Custom duration
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: _durationMinutes > 90
+                    ? AppColors.primaryRed
+                    : Colors.grey.shade300,
+              ),
+              borderRadius: BorderRadius.circular(8),
+              color: _durationMinutes > 90
+                  ? AppColors.primaryRed.withOpacity(0.05)
+                  : Colors.white,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Custom Duration (minutes)',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.secondaryText,
+                      ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _customDurationController,
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          if (value.isNotEmpty) {
+                            final minutes = int.tryParse(value);
+                            if (minutes != null && minutes > 0) {
+                              setState(() {
+                                _durationMinutes = minutes;
+                              });
+                            }
+                          }
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Enter custom duration',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.sm,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // End time display
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.primaryRed.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.primaryRed.withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Start',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.secondaryText,
+                          ),
+                    ),
+                    Text(
+                      '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+                const Icon(Icons.arrow_forward, color: AppColors.primaryRed),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'End',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.secondaryText,
+                          ),
+                    ),
+                    Text(
+                      endTimeStr,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _durationButton(int minutes, String label) {
+    final isSelected = _durationMinutes == minutes;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _durationMinutes = minutes;
+          _customDurationController.clear();
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primaryRed : Colors.white,
+          border: Border.all(
+            color: AppColors.primaryRed,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: isSelected ? Colors.white : AppColors.primaryRed,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
       ),
     );
   }
@@ -568,7 +678,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 icon: Icon(
                   Icons.remove_circle_outline,
                   color: _guestCount > 1
-                      ? AppColors.primaryBlue
+                      ? AppColors.primaryRed
                       : Colors.grey.shade300,
                 ),
               ),
@@ -585,7 +695,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 icon: Icon(
                   Icons.add_circle_outline,
                   color: _guestCount < widget.room.maxGuests
-                      ? AppColors.primaryBlue
+                      ? AppColors.primaryRed
                       : Colors.grey.shade300,
                 ),
               ),
@@ -597,15 +707,15 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Widget _buildSummary() {
-    final days = _checkOutDate?.difference(_checkInDate ?? DateTime.now()).inDays ?? 0;
+    final endTime = _calculateEndTime();
     
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.primaryBlue.withOpacity(0.05),
+        color: AppColors.primaryRed.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.primaryBlue.withOpacity(0.2),
+          color: AppColors.primaryRed.withOpacity(0.2),
         ),
       ),
       child: Column(
@@ -620,7 +730,25 @@ class _BookingScreenState extends State<BookingScreen> {
                     ),
               ),
               Text(
-                '$days ${days != 1 ? 'days' : 'day'}',
+                '$_durationMinutes minutes',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Time Slot',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppColors.secondaryText,
+                    ),
+              ),
+              Text(
+                '${_startTime.hour.toString().padLeft(2, '0')}:${_startTime.minute.toString().padLeft(2, '0')} - ${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -708,7 +836,7 @@ class _BookingScreenState extends State<BookingScreen> {
           text: _isBooking ? 'Booking...' : 'Book Room',
           onPressed: _isBooking ? null : _bookRoom,
           backgroundColor: widget.room.isAvailable
-              ? AppColors.primaryBlue
+              ? AppColors.primaryRed
               : Colors.grey.shade400,
         ),
       ),

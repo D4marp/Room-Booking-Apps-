@@ -87,7 +87,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       onPressed: _clearFilters,
                       child: const Text(
                         'Clear All',
-                        style: TextStyle(color: AppColors.primaryBlue),
+                        style: TextStyle(color: AppColors.primaryRed),
                       ),
                     ),
                   ],
@@ -224,10 +224,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primaryBlue.withOpacity(0.1)
+              ? AppColors.primaryRed.withOpacity(0.1)
               : Colors.transparent,
           border: Border.all(
-            color: isSelected ? AppColors.primaryBlue : Colors.grey.shade300,
+            color: isSelected ? AppColors.primaryRed : Colors.grey.shade300,
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(8),
@@ -238,7 +238,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               isSelected
                   ? Icons.radio_button_checked
                   : Icons.radio_button_unchecked,
-              color: isSelected ? AppColors.primaryBlue : Colors.grey.shade400,
+              color: isSelected ? AppColors.primaryRed : Colors.grey.shade400,
               size: 20,
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -246,7 +246,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               title,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: isSelected
-                        ? AppColors.primaryBlue
+                        ? AppColors.primaryRed
                         : AppColors.primaryText,
                     fontWeight:
                         isSelected ? FontWeight.w600 : FontWeight.normal,

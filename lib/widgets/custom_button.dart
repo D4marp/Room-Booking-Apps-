@@ -37,7 +37,7 @@ class CustomButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? AppColors.primaryBlue,
+          backgroundColor: backgroundColor ?? AppColors.primaryRed,
           foregroundColor: textColor ?? Colors.white,
           elevation: elevation ?? 2,
           padding: padding ??
@@ -115,7 +115,7 @@ class CustomOutlinedButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          foregroundColor: textColor ?? AppColors.primaryBlue,
+          foregroundColor: textColor ?? AppColors.primaryRed,
           padding: padding ??
               const EdgeInsets.symmetric(
                 horizontal: AppSpacing.lg,
@@ -125,7 +125,7 @@ class CustomOutlinedButton extends StatelessWidget {
             borderRadius: borderRadius ?? BorderRadius.circular(12),
           ),
           side: BorderSide(
-            color: borderColor ?? AppColors.primaryBlue,
+            color: borderColor ?? AppColors.primaryRed,
             width: 1.5,
           ),
         ),
@@ -136,7 +136,7 @@ class CustomOutlinedButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    textColor ?? AppColors.primaryBlue,
+                    textColor ?? AppColors.primaryRed,
                   ),
                 ),
               )
@@ -151,7 +151,7 @@ class CustomOutlinedButton extends StatelessWidget {
                   Text(
                     text,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: textColor ?? AppColors.primaryBlue,
+                          color: textColor ?? AppColors.primaryRed,
                           fontWeight: FontWeight.w600,
                         ),
                   ),
@@ -204,7 +204,7 @@ class CustomIconButton extends StatelessWidget {
         onPressed: onPressed,
         icon: Icon(
           icon,
-          color: iconColor ?? AppColors.primaryBlue,
+          color: iconColor ?? AppColors.primaryRed,
           size: iconSize ?? 20,
         ),
         tooltip: tooltip,
@@ -250,7 +250,7 @@ class GradientButton extends StatelessWidget {
         borderRadius: borderRadius ?? BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryBlue.withOpacity(0.3),
+            color: AppColors.primaryRed.withOpacity(0.3),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),

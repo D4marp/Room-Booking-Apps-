@@ -305,4 +305,22 @@ class BookingService {
       throw 'Error fetching past bookings: $e';
     }
   }
+
+  // Get all bookings for a specific room
+  static Future<List<BookingModel>> getBookingsByRoomId(String roomId) async {
+    try {
+      QuerySnapshot snapshot = await _firestore
+          .collection(_collection)
+          .where('roomId', isEqualTo: roomId)
+          .orderBy('checkInDate', descending: false)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => BookingModel.fromJson(
+              {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
+          .toList();
+    } catch (e) {
+      throw 'Error fetching bookings for room: $e';
+    }
+  }
 }

@@ -182,6 +182,16 @@ class BookingProvider extends ChangeNotifier {
 
 
 
+  // Get bookings by room ID
+  Future<List<BookingModel>> getBookingsByRoomId(String roomId) async {
+    try {
+      return await BookingService.getBookingsByRoomId(roomId);
+    } catch (e) {
+      debugPrint('Error fetching bookings for room $roomId: $e');
+      return [];
+    }
+  }
+
   // Refresh bookings
   Future<void> refreshBookings(String userId) async {
     loadUserBookings(userId);

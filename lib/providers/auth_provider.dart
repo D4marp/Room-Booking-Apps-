@@ -209,7 +209,11 @@ class AuthProvider extends ChangeNotifier {
     try {
       final userDoc = await AuthService.getUserDocument(_user!.uid);
       if (userDoc != null) {
-        final role = roleString == 'admin' ? UserRole.admin : UserRole.user;
+        final role = roleString == 'admin' 
+            ? UserRole.admin 
+            : roleString == 'booking'
+            ? UserRole.booking
+            : UserRole.user;
         final updatedUser = userDoc.copyWith(role: role);
         await AuthService.updateUserDocument(updatedUser);
         _userModel = updatedUser;

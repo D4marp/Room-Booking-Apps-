@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/room_provider.dart';
 import '../../utils/app_theme.dart';
@@ -12,6 +13,8 @@ import '../room/rooms_tab_view_screen.dart';
 import '../profile/profile_screen.dart';
 import '../booking/booking_history_screen.dart';
 import '../admin/admin_rooms_screen.dart';
+import 'booking_only_screen.dart';
+import 'rooms_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -55,16 +58,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          _buildHomeTab(),
-          const BookingHistoryScreen(),
-          const ProfileScreen(),
-        ],
-      ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        // Show RoomsListScreen for Booking role
+        if (authProvider.userModel?.role == UserRole.booking) {
+          return const RoomsListScreen();
+        }
+
+        // Default UI for User and Admin roles
+        return Scaffold(
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: [
+              _buildHomeTab(),
+              const BookingHistoryScreen(),
+              const ProfileScreen(),
+            ],
+          ),
+          bottomNavigationBar: _buildBottomNavigationBar(),
+        );
+      },
     );
   }
 
@@ -75,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.lightBlue,
+            AppColors.primaryRedLight,
             AppColors.creamBackground,
           ],
           stops: [0.0, 0.3],
@@ -149,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 child: IconButton(
                   icon: const Icon(
                     Icons.tab,
-                    color: AppColors.primaryBlue,
+                    color: AppColors.primaryRed,
                   ),
                   onPressed: () {
                     Navigator.push(
@@ -169,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryBlue,
+                    color: AppColors.primaryRed,
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
                       BoxShadow(
@@ -218,16 +231,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           fit: BoxFit.cover,
                           placeholder: (context, url) => const Icon(
                             Icons.person,
-                            color: AppColors.primaryBlue,
+                            color: AppColors.primaryRed,
                           ),
                           errorWidget: (context, url, error) => const Icon(
                             Icons.person,
-                            color: AppColors.primaryBlue,
+                            color: AppColors.primaryRed,
                           ),
                         )
                       : const Icon(
                           Icons.person,
-                          color: AppColors.primaryBlue,
+                          color: AppColors.primaryRed,
                         ),
                 ),
               ),
@@ -273,7 +286,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               },
               icon: const Icon(
                 Icons.tune,
-                color: AppColors.primaryBlue,
+                color: AppColors.primaryRed,
               ),
             ),
           ),
@@ -288,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         if (roomProvider.isLoading) {
           return const Center(
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
             ),
           );
         }
@@ -381,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 padding: const EdgeInsets.all(AppSpacing.md),
                 margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryBlue.withOpacity(0.1),
+                  color: AppColors.primaryRed.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -389,7 +402,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     Text(
                       '${roomProvider.filteredRoomCount} rooms found',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: AppColors.primaryBlue,
+                            color: AppColors.primaryRed,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -401,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           'Clear all',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.primaryBlue,
+                                    color: AppColors.primaryRed,
                                     decoration: TextDecoration.underline,
                                   ),
                         ),
@@ -463,7 +476,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        selectedItemColor: AppColors.primaryBlue,
+        selectedItemColor: AppColors.primaryRed,
         unselectedItemColor: AppColors.lightText,
         selectedLabelStyle: const TextStyle(
           fontWeight: FontWeight.w600,

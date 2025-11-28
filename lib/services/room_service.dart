@@ -9,7 +9,6 @@ class RoomService {
   static Stream<List<RoomModel>> getAllRooms() {
     return _firestore
         .collection(_collection)
-        .where('isAvailable', isEqualTo: true)
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {

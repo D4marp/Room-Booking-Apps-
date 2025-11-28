@@ -54,9 +54,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
             Tab(text: 'Upcoming'),
             Tab(text: 'Past'),
           ],
-          labelColor: AppColors.primaryBlue,
+          labelColor: AppColors.primaryRed,
           unselectedLabelColor: AppColors.secondaryText,
-          indicatorColor: AppColors.primaryBlue,
+          indicatorColor: AppColors.primaryRed,
         ),
       ),
       body: Consumer<BookingProvider>(
@@ -65,7 +65,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
             return const Center(
               child: CircularProgressIndicator(
                 valueColor:
-                    AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
+                    AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
               ),
             );
           }

@@ -40,7 +40,7 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Rooms'),
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.primaryRed,
         foregroundColor: Colors.white,
       ),
       body: roomProvider.isLoading
@@ -82,7 +82,7 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
             ),
           );
         },
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.primaryRed,
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
@@ -140,13 +140,13 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryBlue.withOpacity(0.1),
+                        color: AppColors.primaryRed.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         room.roomClass,
                         style: const TextStyle(
-                          color: AppColors.primaryBlue,
+                          color: AppColors.primaryRed,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -169,7 +169,7 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.primaryBlue,
+                        color: AppColors.primaryRed,
                       ),
                     ),
                   ],
@@ -230,7 +230,7 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
                       icon: const Icon(Icons.edit, size: 18),
                       label: const Text('Edit'),
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primaryBlue,
+                        foregroundColor: AppColors.primaryRed,
                       ),
                     ),
                     const SizedBox(width: 8),

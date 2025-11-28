@@ -81,7 +81,7 @@ class _AddEditRoomScreenState extends State<AddEditRoomScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.room == null ? 'Add Room' : 'Edit Room'),
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: AppColors.primaryRed,
         foregroundColor: Colors.white,
       ),
       body: Form(
@@ -218,7 +218,7 @@ class _AddEditRoomScreenState extends State<AddEditRoomScreen> {
                   _isAvailable = value;
                 });
               },
-              activeColor: AppColors.primaryBlue,
+              activeColor: AppColors.primaryRed,
             ),
             const SizedBox(height: 24),
             

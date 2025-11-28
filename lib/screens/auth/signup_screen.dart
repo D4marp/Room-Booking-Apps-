@@ -124,7 +124,7 @@ class _SignUpScreenState extends State<SignUpScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppColors.lightBlue,
+              AppColors.primaryRed,
               AppColors.creamBackground,
             ],
           ),
@@ -155,24 +155,14 @@ class _SignUpScreenState extends State<SignUpScreen>
                     Center(
                       child: Column(
                         children: [
-                          Container(
-                            width: 80,
-                            height: 80,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.person_add,
-                              size: 40,
-                              color: AppColors.primaryBlue,
+                            Container(
+                            width: 160,
+                            height: 160,
+                            child: Image.asset(
+                              'assets/images/adduser.png',
+                              width: 160,
+                              height: 160,
+                              fit: BoxFit.contain,
                             ),
                           ),
                           const SizedBox(height: AppSpacing.lg),
@@ -183,7 +173,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                 .displaySmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryText,
+                                  color: const Color.fromARGB(255, 255, 255, 255),
                                 ),
                           ),
                           const SizedBox(height: AppSpacing.sm),
@@ -191,7 +181,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                             'Join us and start booking amazing rooms',
                             style:
                                 Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: AppColors.secondaryText,
+                                      color: const Color.fromARGB(255, 255, 255, 255),
                                     ),
                             textAlign: TextAlign.center,
                           ),
@@ -280,7 +270,14 @@ class _SignUpScreenState extends State<SignUpScreen>
                                       Expanded(
                                         child: _buildRoleOption(
                                           'user',
-                                          '👤 Regular User',
+                                          '👤 User',
+                                        ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.md),
+                                      Expanded(
+                                        child: _buildRoleOption(
+                                          'booking',
+                                          '🏨 Booking',
                                         ),
                                       ),
                                       const SizedBox(width: AppSpacing.md),
@@ -291,6 +288,56 @@ class _SignUpScreenState extends State<SignUpScreen>
                                         ),
                                       ),
                                     ],
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  // Role descriptions
+                                  Container(
+                                    padding: const EdgeInsets.all(AppSpacing.sm),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.withOpacity(0.05),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.blue.withOpacity(0.2),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        if (_selectedRole == 'user')
+                                          Text(
+                                            '👤 User: Browse and book rooms, view booking history',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: Colors.blue.shade700,
+                                                  fontSize: 12,
+                                                ),
+                                          ),
+                                        if (_selectedRole == 'booking')
+                                          Text(
+                                            '🏨 Booking: Dedicated booking interface, book rooms for guests',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: Colors.blue.shade700,
+                                                  fontSize: 12,
+                                                ),
+                                          ),
+                                        if (_selectedRole == 'admin')
+                                          Text(
+                                            '👨‍💼 Admin: Manage rooms, view all bookings, full access',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: Colors.blue.shade700,
+                                                  fontSize: 12,
+                                                ),
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ],
                               ),
@@ -378,7 +425,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                       _agreeToTerms = value ?? false;
                                     });
                                   },
-                                  activeColor: AppColors.primaryBlue,
+                                  activeColor: AppColors.primaryRed,
                                 ),
                                 Expanded(
                                   child: Padding(
@@ -394,7 +441,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                           TextSpan(
                                             text: 'Terms and Conditions',
                                             style: TextStyle(
-                                              color: AppColors.primaryBlue,
+                                              color: AppColors.primaryRed,
                                               decoration:
                                                   TextDecoration.underline,
                                             ),
@@ -403,7 +450,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                           TextSpan(
                                             text: 'Privacy Policy',
                                             style: TextStyle(
-                                              color: AppColors.primaryBlue,
+                                              color: AppColors.primaryRed,
                                               decoration:
                                                   TextDecoration.underline,
                                             ),
@@ -457,7 +504,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                             child: const Text(
                               'Sign In',
                               style: TextStyle(
-                                color: AppColors.primaryBlue,
+                                color: AppColors.primaryRed,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -488,13 +535,13 @@ class _SignUpScreenState extends State<SignUpScreen>
         decoration: BoxDecoration(
           border: Border.all(
             color: isSelected
-                ? AppColors.primaryBlue
+                ? AppColors.primaryRed
                 : AppColors.lightText,
             width: isSelected ? 2.5 : 1.5,
           ),
           borderRadius: BorderRadius.circular(10),
           color: isSelected
-              ? AppColors.primaryBlue.withOpacity(0.05)
+              ? AppColors.primaryRed.withOpacity(0.05)
               : Colors.transparent,
         ),
         child: Column(
@@ -509,7 +556,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                     ? FontWeight.bold
                     : FontWeight.w500,
                 color: isSelected
-                    ? AppColors.primaryBlue
+                    ? AppColors.primaryRed
                     : AppColors.secondaryText,
               ),
             ),
@@ -518,7 +565,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                 padding: const EdgeInsets.only(top: 4.0),
                 child: Icon(
                   Icons.check_circle,
-                  color: AppColors.primaryBlue,
+                  color: AppColors.primaryRed,
                   size: 18,
                 ),
               ),

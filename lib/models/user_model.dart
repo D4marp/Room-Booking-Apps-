@@ -1,4 +1,4 @@
-enum UserRole { user, admin }
+enum UserRole { user, admin, booking }
 
 class UserModel {
   final String id;
@@ -29,7 +29,11 @@ class UserModel {
       updatedAt: json['updatedAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'])
           : null,
-      role: json['role'] == 'admin' ? UserRole.admin : UserRole.user,
+      role: json['role'] == 'admin' 
+          ? UserRole.admin 
+          : json['role'] == 'booking'
+          ? UserRole.booking
+          : UserRole.user,
     );
   }
 
@@ -41,7 +45,7 @@ class UserModel {
       'profileImage': profileImage,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt?.millisecondsSinceEpoch,
-      'role': role == UserRole.admin ? 'admin' : 'user',
+      'role': role == UserRole.admin ? 'admin' : role == UserRole.booking ? 'booking' : 'user',
     };
   }
 

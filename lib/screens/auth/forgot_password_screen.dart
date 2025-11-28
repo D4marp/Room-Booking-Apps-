@@ -90,7 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              AppColors.lightBlue,
+              AppColors.primaryRed,
               AppColors.creamBackground,
             ],
           ),
@@ -140,7 +140,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                                   ? Icons.mark_email_read
                                   : Icons.lock_reset,
                               size: 40,
-                              color: AppColors.primaryBlue,
+                              color: AppColors.primaryRed,
                             ),
                           ),
                           const SizedBox(height: AppSpacing.lg),
@@ -189,7 +189,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         child: const Text(
                           'Back to Sign In',
                           style: TextStyle(
-                            color: AppColors.primaryBlue,
+                            color: AppColors.primaryRed,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -307,7 +307,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           child: const Text(
             'Try Again',
             style: TextStyle(
-              color: AppColors.primaryBlue,
+              color: AppColors.primaryRed,
               fontWeight: FontWeight.w600,
             ),
           ),

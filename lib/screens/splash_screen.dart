@@ -170,7 +170,7 @@ class _SplashScreenState extends State<SplashScreen>
                             offset: const Offset(0, 15),
                           ),
                           BoxShadow(
-                            color: AppColors.primaryBlue.withOpacity(0.15),
+                            color: AppColors.primaryRed.withOpacity(0.15),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -182,7 +182,7 @@ class _SplashScreenState extends State<SplashScreen>
                           Icon(
                             Icons.meeting_room,
                             size: 70,
-                            color: AppColors.primaryBlue,
+                            color: AppColors.primaryRed,
                           ),
                           Positioned(
                             top: 10,

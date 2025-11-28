@@ -196,7 +196,7 @@ class BookingCard extends StatelessWidget {
                                   .textTheme
                                   .titleMedium
                                   ?.copyWith(
-                                    color: AppColors.primaryBlue,
+                                    color: AppColors.primaryRed,
                                     fontWeight: FontWeight.bold,
                                   ),
                             ),
@@ -320,7 +320,7 @@ class BookingCard extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       decoration: BoxDecoration(
-        color: AppColors.primaryBlue.withOpacity(0.1),
+        color: AppColors.primaryRed.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -329,13 +329,13 @@ class BookingCard extends StatelessWidget {
           Icon(
             icon,
             size: 14,
-            color: AppColors.primaryBlue,
+            color: AppColors.primaryRed,
           ),
           const SizedBox(width: 4),
           Text(
             text,
             style: const TextStyle(
-              color: AppColors.primaryBlue,
+              color: AppColors.primaryRed,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -354,7 +354,7 @@ class BookingCard extends StatelessWidget {
       case BookingStatus.cancelled:
         return AppColors.errorRed;
       case BookingStatus.completed:
-        return AppColors.primaryBlue;
+        return AppColors.primaryRed;
     }
   }
 }

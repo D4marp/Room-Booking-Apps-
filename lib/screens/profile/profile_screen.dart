@@ -109,8 +109,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primaryBlue,
-            AppColors.primaryBlue.withOpacity(0.6),
+            AppColors.primaryRed,
+            AppColors.primaryRed.withOpacity(0.6),
           ],
         ),
       ),
@@ -164,13 +164,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 errorWidget: (context, url, error) => Icon(
                                   Icons.person,
                                   size: 60,
-                                  color: AppColors.primaryBlue,
+                                  color: AppColors.primaryRed,
                                 ),
                               )
                             : Icon(
                                 Icons.person,
                                 size: 60,
-                                color: AppColors.primaryBlue,
+                                color: AppColors.primaryRed,
                               ),
                       ),
                     ),
@@ -381,8 +381,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-        splashColor: AppColors.primaryBlue.withOpacity(0.1),
-        highlightColor: AppColors.primaryBlue.withOpacity(0.05),
+        splashColor: AppColors.primaryRed.withOpacity(0.1),
+        highlightColor: AppColors.primaryRed.withOpacity(0.05),
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,

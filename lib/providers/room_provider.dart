@@ -42,14 +42,31 @@ class RoomProvider extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      RoomService.getAllRooms().listen((rooms) {
+      // Convert stream to future and wait for first event with timeout
+      final roomsStream = RoomService.getAllRooms();
+      
+      // Wait for first event with a timeout
+      _rooms = await roomsStream.first.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => [],
+      );
+      
+      _applyFilters();
+      _setLoading(false);
+      notifyListeners();
+      
+      // Continue listening for updates
+      roomsStream.listen((rooms) {
         _rooms = rooms;
         _applyFilters();
+        notifyListeners();
       });
     } catch (e) {
+      debugPrint('Error loading rooms: $e');
       _setError(e.toString());
-    } finally {
       _setLoading(false);
+      _rooms = [];
+      notifyListeners();
     }
   }
 

@@ -2,47 +2,96 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppColors {
-  // Primary Blue Gradient Colors
-  static const Color primaryBlue = Color(0xFF1E3A8A);
-  static const Color secondaryBlue = Color(0xFF3B82F6);
-  static const Color lightBlue = Color(0xFF60A5FA);
+  // ===== PRIMARY COLOR SCHEME =====
+  // Main: Red (Dominan - Merah)
+  static const Color primaryRed = Color(0xFFD92F21);         // Dominan Red
+  static const Color primaryRedDark = Color(0xFFB91C1C);     // Darker Red
+  static const Color primaryRedLight = Color(0xFFEF5A48);    // Bright Red
 
-  // Background Colors
-  static const Color creamBackground = Color(0xFFFAF9F6);
-  static const Color lightCream = Color(0xFFFDF7F0);
-  static const Color cardBackground = Color(0xFFFFFFFF);
+  // Legacy Blue (untuk secondary accents)
+  static const Color secondaryBlue = Color(0xFF3B82F6);      // Secondary Blue
+  static const Color secondaryBlueDark = Color(0xFF1E40AF);  // Darker Blue
 
-  // Accent Colors
-  static const Color accentOrange = Color(0xFFFF6B35);
-  static const Color successGreen = Color(0xFF10B981);
-  static const Color warningYellow = Color(0xFFF59E0B);
-  static const Color errorRed = Color(0xFFEF4444);
+  // ===== STATUS COLORS (SEMANTIC) =====
+  // Available: Green (indicates available/good)
+  static const Color successGreen = Color(0xFF16A34A);       // Available - Green
+  static const Color successGreenLight = Color(0xFFDCEDC5);  // Available Light BG
+  static const Color successGreenDark = Color(0xFF15803D);   // Available Dark
 
-  // Text Colors
-  static const Color primaryText = Color(0xFF1F2937);
-  static const Color secondaryText = Color(0xFF6B7280);
-  static const Color lightText = Color(0xFF9CA3AF);
+  // Booked: Red variant (indicates unavailable/warning)
+  static const Color errorRed = Color(0xFFDC2626);           // Error - Red
+  static const Color errorRedLight = Color(0xFFFEE2E2);      // Error Light BG
+  static const Color errorRedDark = Color(0xFFB91C1C);       // Error Dark
 
-  // Gradients
+  // ===== NEUTRAL COLORS =====
+  static const Color warningYellow = Color(0xFFF59E0B);      // Pending/Warning
+  static const Color warningYellowLight = Color(0xFFFEF3C7); // Warning Light BG
+  static const Color infoBlue = Color(0xFF0EA5E9);           // Info/Highlight
+
+  // ===== BACKGROUND COLORS =====
+  static const Color creamBackground = Color(0xFFF8FAFC);    // Light Gray-Blue
+  static const Color lightCream = Color(0xFFFDF7F0);         // Very Light
+  static const Color cardBackground = Color(0xFFFFFFFF);     // Pure White
+  static const Color darkBackground = Color(0xFF0F172A);     // Dark (if needed)
+
+  // ===== TEXT COLORS =====
+  static const Color primaryText = Color(0xFF0F172A);        // Near Black
+  static const Color secondaryText = Color(0xFF64748B);      // Gray
+  static const Color lightText = Color(0xFFCBD5E1);          // Light Gray
+  static const Color disabledText = Color(0xFFE2E8F0);       // Disabled Gray
+
+  // ===== STRUCTURAL COLORS =====
+  static const Color borderColor = Color(0xFFE2E8F0);        // Light Border
+  static const Color borderColorDark = Color(0xFFCBD5E1);    // Dark Border
+  static const Color shadowColor = Color(0xFF000000);        // For shadows
+
+  // ===== ACCENT COLORS =====
+  static const Color accentOrange = Color(0xFFF97316);       // Accent Orange
+  static const Color accentPurple = Color(0xFFA855F7);       // Accent Purple
+
+  // ===== GRADIENTS =====
+  // Primary Gradient: RED theme (Dominan)
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [primaryBlue, secondaryBlue, lightBlue],
+    colors: [primaryRed, primaryRedLight],
   );
 
+  // Available Status Gradient: Green
+  static const LinearGradient availableGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF16A34A), Color(0xFF22C55E)],
+  );
+
+  // Booked Status Gradient: Darker Red
+  static const LinearGradient bookedGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFDC2626), Color(0xFFEF4444)],
+  );
+
+  // Card Gradient: Subtle white
   static const LinearGradient cardGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFFFFFFFF), Color(0xFFF8FAFC)],
+  );
+
+  // Header Gradient: Premium Red
+  static const LinearGradient headerGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryRed, primaryRedLight],
   );
 }
 
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
-      primaryColor: AppColors.primaryBlue,
+      primaryColor: AppColors.primaryRed,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primaryBlue,
+        seedColor: AppColors.primaryRed,
         brightness: Brightness.light,
         background: AppColors.creamBackground,
         surface: AppColors.cardBackground,
@@ -139,7 +188,7 @@ class AppTheme {
       // Elevated Button Theme
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryBlue,
+          backgroundColor: AppColors.primaryRed,
           foregroundColor: Colors.white,
           elevation: 2,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
@@ -167,7 +216,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primaryBlue, width: 2),
+          borderSide: const BorderSide(color: AppColors.primaryRed, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -187,7 +236,7 @@ class AppTheme {
 
       // Icon Theme
       iconTheme: const IconThemeData(
-        color: AppColors.primaryBlue,
+        color: AppColors.primaryRed,
         size: 24,
       ),
 

@@ -1,51 +1,280 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/room_model.dart';
+import '../../models/booking_model.dart';
+import '../../providers/room_provider.dart';
 import '../../providers/booking_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_theme.dart';
 
-class RoomDetailsScreen extends StatefulWidget {
-  final RoomModel room;
-  final bool isKioskMode;
+class BookingOnlyScreen extends StatefulWidget {
+  final RoomModel? selectedRoom;
 
-  const RoomDetailsScreen({
-    super.key,
-    required this.room,
-    this.isKioskMode = false,
-  });
+  const BookingOnlyScreen({super.key, this.selectedRoom});
 
   @override
-  State<RoomDetailsScreen> createState() => _RoomDetailsScreenState();
+  State<BookingOnlyScreen> createState() => _BookingOnlyScreenState();
 }
 
-class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
+class _BookingOnlyScreenState extends State<BookingOnlyScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  List<RoomModel> _rooms = [];
+  Map<String, List<BookingModel>> _roomBookings = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadRooms();
+    });
+  }
+
+  Future<void> _loadRooms() async {
+    final roomProvider = Provider.of<RoomProvider>(context, listen: false);
+    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+
+    await roomProvider.loadRooms();
+
+    if (mounted) {
+      setState(() {
+        _rooms = roomProvider.allRooms;
+
+        // If selectedRoom is provided, show only that room
+        if (widget.selectedRoom != null) {
+          _rooms = [widget.selectedRoom!];
+        }
+
+        if (_rooms.isNotEmpty) {
+          _tabController = TabController(length: _rooms.length, vsync: this);
+          _loadBookingsForRooms(bookingProvider);
+        }
+
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadBookingsForRooms(BookingProvider bookingProvider) async {
+    for (var room in _rooms) {
+      try {
+        final bookings = await bookingProvider.getBookingsByRoomId(room.id);
+        if (mounted) {
+          setState(() {
+            _roomBookings[room.id] = bookings;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _roomBookings[room.id] = [];
+          });
+        }
+        debugPrint('Error loading bookings for room ${room.id}: $e');
+      }
+    }
+  }
+
+  List<BookingModel> _getTodayBookings(String roomId) {
+    final bookings = _roomBookings[roomId] ?? [];
+    final today = DateTime.now();
+
+    try {
+      return bookings
+          .where((booking) {
+            return booking.checkInDate.year == today.year &&
+                booking.checkInDate.month == today.month &&
+                booking.checkInDate.day == today.day;
+          })
+          .toList()
+        ..sort((a, b) {
+          try {
+            final aHour = int.parse(a.checkInTime.split(':')[0]);
+            final aMin = int.parse(a.checkInTime.split(':')[1]);
+            final bHour = int.parse(b.checkInTime.split(':')[0]);
+            final bMin = int.parse(b.checkInTime.split(':')[1]);
+
+            final aTotal = aHour * 60 + aMin;
+            final bTotal = bHour * 60 + bMin;
+            return aTotal.compareTo(bTotal);
+          } catch (e) {
+            debugPrint('Error comparing booking times: $e');
+            return 0;
+          }
+        });
+    } catch (e) {
+      debugPrint('Error filtering today bookings: $e');
+      return [];
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_rooms.isNotEmpty) {
+      _tabController.dispose();
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        // Prevent back navigation in kiosk mode
-        if (widget.isKioskMode) {
-          return false;
-        }
-        return true;
-      },
-      child: Scaffold(
-        body: Stack(
-          children: [
-            _buildRoomDetails(),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _buildBookButton(),
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Book a Room'),
+          backgroundColor: Colors.black87,
+          elevation: 0,
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
+          ),
+        ),
+      );
+    }
+
+    if (_rooms.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Book a Room'),
+          backgroundColor: Colors.black87,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadRooms,
             ),
           ],
         ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.meeting_room_outlined,
+                size: 64,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                'No Rooms Available',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                    ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'Add rooms from admin panel',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.white54,
+                    ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              ElevatedButton.icon(
+                onPressed: _loadRooms,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Refresh'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryRed,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              // AppBar with TabBar
+              AppBar(
+                title: const Text('Book a Room'),
+                backgroundColor: Colors.black87,
+                elevation: 0,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: _loadRooms,
+                  ),
+                ],
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(48),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Container(
+                      color: Colors.black87,
+                      child: TabBar(
+                        controller: _tabController,
+                        isScrollable: true,
+                        labelColor: AppColors.primaryRed,
+                        unselectedLabelColor: Colors.white54,
+                        indicatorColor: AppColors.primaryRed,
+                        indicatorWeight: 3,
+                        tabAlignment: TabAlignment.start,
+                        tabs: _rooms.map((room) {
+                          return Tab(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getRoomIcon(room.roomClass),
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  room.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // TabBarView
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: _rooms.map((room) {
+                    return _buildRoomDetailScreen(room);
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
-  Widget _buildRoomDetails() {
+
+  Widget _buildRoomDetailScreen(RoomModel room) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          _buildRoomDetails(room),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildBookButton(room),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoomDetails(RoomModel room) {
     return Container(
       color: Colors.black87,
       child: Column(
@@ -53,32 +282,32 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
-            child: _buildReservaHeader(),
+            child: _buildReservaHeader(room),
           ),
           const SizedBox(height: AppSpacing.sm),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-              child: _buildScheduleSection(),
+              child: _buildScheduleSection(room),
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
-            child: _buildQuickInfoChips(),
+            child: _buildQuickInfoChips(room),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildReservaHeader() {
+  Widget _buildReservaHeader(RoomModel room) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: widget.room.isAvailable
+          colors: room.isAvailable
               ? [const Color(0xFF2E7D32), const Color(0xFF1B5E20)]
               : [const Color(0xFFB71C1C), const Color(0xFF8B0000)],
         ),
@@ -89,7 +318,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            widget.room.name,
+            room.name,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -100,7 +329,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            widget.room.roomClass,
+            room.roomClass,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.white.withOpacity(0.85),
                   fontSize: 16,
@@ -114,7 +343,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '${widget.room.location}, ${widget.room.city}',
+                  '${room.location}, ${room.city}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white,
                         fontSize: 15,
@@ -130,12 +359,12 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: widget.room.isAvailable
+              color: room.isAvailable
                   ? Colors.green.withOpacity(0.2)
                   : Colors.red.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: widget.room.isAvailable
+                color: room.isAvailable
                     ? Colors.green.withOpacity(0.7)
                     : Colors.red.withOpacity(0.7),
                 width: 1.5,
@@ -145,13 +374,13 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  widget.room.isAvailable ? Icons.check_circle : Icons.cancel,
-                  color: widget.room.isAvailable ? Colors.green : Colors.red,
+                  room.isAvailable ? Icons.check_circle : Icons.cancel,
+                  color: room.isAvailable ? Colors.green : Colors.red,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  widget.room.isAvailable ? 'Available' : 'Booked',
+                  room.isAvailable ? 'Available' : 'Booked',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -166,8 +395,8 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     );
   }
 
-  Widget _buildScheduleSection() {
-    final borderColor = widget.room.isAvailable ? Colors.green.shade700 : Colors.red.shade700;
+  Widget _buildScheduleSection(RoomModel room) {
+    final borderColor = room.isAvailable ? Colors.green.shade700 : Colors.red.shade700;
     return Container(
       decoration: BoxDecoration(
         color: Colors.transparent,
@@ -197,54 +426,189 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
             ),
           ),
           Expanded(
-            child: _buildScheduleList(),
+            child: _buildScheduleList(room),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildScheduleList() {
-    // TODO: Fetch real schedule from Firebase
-    // Untuk sekarang tampilkan pesan kosong jika tidak ada data
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.event_available,
-            color: Colors.white30,
-            size: 40,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'No schedule available',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white54,
-                  fontSize: 14,
+  Widget _buildScheduleList(RoomModel room) {
+    final todayBookings = _getTodayBookings(room.id);
+
+    if (todayBookings.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_available,
+              color: Colors.white30,
+              size: 40,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No bookings today',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white54,
+                    fontSize: 14,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Room is available for booking',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.white30,
+                    fontSize: 12,
+                  ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      itemCount: todayBookings.length,
+      itemBuilder: (context, index) {
+        final booking = todayBookings[index];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Time slot
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time,
+                      color: AppColors.primaryRed,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${booking.checkInTime} - ${booking.checkOutTime}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 10),
+                // Guest count
+                Row(
+                  children: [
+                    Icon(
+                      Icons.people,
+                      color: Colors.white54,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${booking.numberOfGuests} guest${booking.numberOfGuests > 1 ? 's' : ''}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
+                    ),
+                  ],
+                ),
+                if (booking.purpose != null && booking.purpose!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.description,
+                        color: Colors.white54,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          booking.purpose!,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 10),
+                // Status badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(booking.status).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: _getStatusColor(booking.status).withOpacity(0.5),
+                    ),
+                  ),
+                  child: Text(
+                    booking.status.toString().split('.').last.toUpperCase(),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: _getStatusColor(booking.status),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildQuickInfoChips() {
+  Color _getStatusColor(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.confirmed:
+        return Colors.green;
+      case BookingStatus.pending:
+        return Colors.orange;
+      case BookingStatus.cancelled:
+        return Colors.red;
+      case BookingStatus.completed:
+        return Colors.blue;
+    }
+  }
+
+  Widget _buildQuickInfoChips(RoomModel room) {
     return Row(
       children: [
         Expanded(
           child: _buildInfoChip(
             icon: Icons.people,
             label: 'Capacity',
-            value: '${widget.room.maxGuests}',
+            value: '${room.maxGuests}',
+            room: room,
           ),
         ),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: _buildInfoChip(
-            icon: widget.room.hasAC ? Icons.ac_unit : Icons.wind_power,
+            icon: room.hasAC ? Icons.ac_unit : Icons.wind_power,
             label: 'Climate',
-            value: widget.room.hasAC ? 'AC' : 'Fan',
+            value: room.hasAC ? 'AC' : 'Fan',
+            room: room,
           ),
         ),
       ],
@@ -255,9 +619,10 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     required IconData icon,
     required String label,
     required String value,
+    required RoomModel room,
   }) {
-    final borderColor = widget.room.isAvailable ? Colors.green.shade700 : Colors.red.shade700;
-    final bgColor = widget.room.isAvailable ? Colors.green.shade900 : Colors.red.shade900;
+    final borderColor = room.isAvailable ? Colors.green.shade700 : Colors.red.shade700;
+    final bgColor = room.isAvailable ? Colors.green.shade900 : Colors.red.shade900;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -290,7 +655,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     );
   }
 
-  Widget _buildBookButton() {
+  Widget _buildBookButton(RoomModel room) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: const BoxDecoration(
@@ -305,13 +670,13 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
       ),
       child: SafeArea(
         child: ElevatedButton.icon(
-          onPressed: widget.room.isAvailable
-              ? () => _showBookingDialog()
+          onPressed: room.isAvailable
+              ? () => _showBookingDialog(room)
               : null,
           icon: const Icon(Icons.add_circle_outline, size: 18),
           label: const Text('Book Now'),
           style: ElevatedButton.styleFrom(
-            backgroundColor: widget.room.isAvailable
+            backgroundColor: room.isAvailable
                 ? AppColors.primaryRed
                 : Colors.grey.shade600,
             foregroundColor: Colors.white,
@@ -326,15 +691,38 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     );
   }
 
-  void _showBookingDialog() {
+  void _showBookingDialog(RoomModel room) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => _BookingFormWidget(room: widget.room),
+      builder: (context) => _BookingFormWidget(room: room),
     );
+  }
+
+  IconData _getRoomIcon(String roomClass) {
+    switch (roomClass.toLowerCase()) {
+      case 'meeting room':
+        return Icons.groups;
+      case 'conference room':
+        return Icons.business;
+      case 'class room':
+        return Icons.school;
+      case 'lecture hall':
+        return Icons.theater_comedy;
+      case 'training room':
+        return Icons.model_training;
+      case 'board room':
+        return Icons.dashboard;
+      case 'study room':
+        return Icons.menu_book;
+      case 'lab':
+        return Icons.science;
+      default:
+        return Icons.meeting_room;
+    }
   }
 }
 

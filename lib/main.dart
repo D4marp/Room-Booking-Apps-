@@ -17,8 +17,8 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Note: Sample room data is now added via admin panel after login
-  // Disabled automatic initialization due to Firestore security rules
+  // Note: Sample data initialization disabled due to Firestore security rules
+  // Data can be added via admin panel or Firestore console
   
   runApp(const BookifyRoomsApp());
 }

@@ -78,16 +78,10 @@ class _BookingOnlyScreenState extends State<BookingOnlyScreen>
 
   List<BookingModel> _getTodayBookings(String roomId) {
     final bookings = _roomBookings[roomId] ?? [];
-    final today = DateTime.now();
 
     try {
+      // Sort by checkInTime and return all bookings for this room
       return bookings
-          .where((booking) {
-            return booking.checkInDate.year == today.year &&
-                booking.checkInDate.month == today.month &&
-                booking.checkInDate.day == today.day;
-          })
-          .toList()
         ..sort((a, b) {
           try {
             final aHour = int.parse(a.checkInTime.split(':')[0]);
@@ -104,7 +98,7 @@ class _BookingOnlyScreenState extends State<BookingOnlyScreen>
           }
         });
     } catch (e) {
-      debugPrint('Error filtering today bookings: $e');
+      debugPrint('Error filtering bookings: $e');
       return [];
     }
   }
@@ -434,9 +428,9 @@ class _BookingOnlyScreenState extends State<BookingOnlyScreen>
   }
 
   Widget _buildScheduleList(RoomModel room) {
-    final todayBookings = _getTodayBookings(room.id);
+    final bookings = _getTodayBookings(room.id);
 
-    if (todayBookings.isEmpty) {
+    if (bookings.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -448,7 +442,7 @@ class _BookingOnlyScreenState extends State<BookingOnlyScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'No bookings today',
+              'No bookings available',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.white54,
                     fontSize: 14,
@@ -469,9 +463,9 @@ class _BookingOnlyScreenState extends State<BookingOnlyScreen>
 
     return ListView.builder(
       padding: const EdgeInsets.all(AppSpacing.md),
-      itemCount: todayBookings.length,
+      itemCount: bookings.length,
       itemBuilder: (context, index) {
-        final booking = todayBookings[index];
+        final booking = bookings[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.md),
           child: Container(

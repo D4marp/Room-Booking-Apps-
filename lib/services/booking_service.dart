@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 import '../models/booking_model.dart';
@@ -309,17 +310,22 @@ class BookingService {
   // Get all bookings for a specific room
   static Future<List<BookingModel>> getBookingsByRoomId(String roomId) async {
     try {
+      debugPrint('🔍 Fetching bookings for room: $roomId');
       QuerySnapshot snapshot = await _firestore
           .collection(_collection)
           .where('roomId', isEqualTo: roomId)
           .orderBy('checkInDate', descending: false)
           .get();
 
-      return snapshot.docs
+      debugPrint('📊 Found ${snapshot.docs.length} bookings in Firestore for room $roomId');
+      final bookings = snapshot.docs
           .map((doc) => BookingModel.fromJson(
               {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
           .toList();
+      
+      return bookings;
     } catch (e) {
+      debugPrint('❌ Error fetching bookings for room $roomId: $e');
       throw 'Error fetching bookings for room: $e';
     }
   }

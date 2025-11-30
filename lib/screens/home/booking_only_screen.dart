@@ -60,6 +60,10 @@ class _BookingOnlyScreenState extends State<BookingOnlyScreen>
     for (var room in _rooms) {
       try {
         final bookings = await bookingProvider.getBookingsByRoomId(room.id);
+        debugPrint('✅ Loaded ${bookings.length} bookings for room ${room.name} (${room.id})');
+        for (var booking in bookings) {
+          debugPrint('   - ${booking.checkInTime} to ${booking.checkOutTime} | Status: ${booking.status.name}');
+        }
         if (mounted) {
           setState(() {
             _roomBookings[room.id] = bookings;
@@ -71,7 +75,7 @@ class _BookingOnlyScreenState extends State<BookingOnlyScreen>
             _roomBookings[room.id] = [];
           });
         }
-        debugPrint('Error loading bookings for room ${room.id}: $e');
+        debugPrint('❌ Error loading bookings for room ${room.id}: $e');
       }
     }
   }

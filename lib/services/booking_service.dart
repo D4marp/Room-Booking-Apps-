@@ -22,6 +22,8 @@ class BookingService {
     String? purpose,
   }) async {
     try {
+      debugPrint('🔍 Creating booking for room: $roomId');
+      
       // Check room availability first
       bool isAvailable =
           await RoomService.isRoomAvailable(roomId, checkInDate, checkOutDate);
@@ -58,12 +60,20 @@ class BookingService {
         roomImageUrl: room.primaryImageUrl,
       );
 
+      debugPrint('💾 Saving booking to Firestore...');
+      debugPrint('   Booking ID: $bookingId');
+      debugPrint('   Room: ${room.name}, Date: ${checkInDate.toString().split(' ')[0]}');
+      debugPrint('   Time: $checkInTime - $checkOutTime, Guests: $numberOfGuests');
+      
       await _firestore
           .collection(_collection)
           .doc(bookingId)
           .set(booking.toJson());
+      
+      debugPrint('✅ Booking saved successfully to Firestore');
       return bookingId;
     } catch (e) {
+      debugPrint('❌ Error creating booking: $e');
       throw 'Error creating booking: $e';
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/room_model.dart';
+import '../../models/booking_model.dart';
 import '../../providers/booking_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_theme.dart';
@@ -20,6 +21,26 @@ class RoomDetailsScreen extends StatefulWidget {
 }
 
 class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
+  late Future<List<BookingModel>> _bookingsFuture;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadBookings();
+  }
+  
+  Future<void> _loadBookings() async {
+    final bookingProvider = context.read<BookingProvider>();
+    try {
+      final bookings = await bookingProvider.getBookingsByRoomId(widget.room.id);
+      setState(() {
+        _bookingsFuture = Future.value(bookings);
+      });
+    } catch (e) {
+      debugPrint('Error loading bookings: $e');
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -205,28 +226,166 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   }
 
   Widget _buildScheduleList() {
-    // TODO: Fetch real schedule from Firebase
-    // Untuk sekarang tampilkan pesan kosong jika tidak ada data
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.event_available,
-            color: Colors.white30,
-            size: 40,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'No schedule available',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white54,
-                  fontSize: 14,
+    return FutureBuilder<List<BookingModel>>(
+      future: _bookingsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
+            ),
+          );
+        }
+        
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading schedule',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white54,
+                  ),
+            ),
+          );
+        }
+        
+        final bookings = snapshot.data ?? [];
+        debugPrint('📅 RoomDetailsScreen: Loaded ${bookings.length} bookings for room ${widget.room.id}');
+        
+        if (bookings.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.event_available,
+                  color: Colors.white30,
+                  size: 40,
                 ),
-          ),
-        ],
-      ),
+                const SizedBox(height: 8),
+                Text(
+                  'No bookings yet',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white54,
+                        fontSize: 14,
+                      ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        return ListView.builder(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          itemCount: bookings.length,
+          itemBuilder: (context, index) {
+            final booking = bookings[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          color: AppColors.primaryRed,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '${booking.checkInTime} - ${booking.checkOutTime}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.people,
+                          color: Colors.white54,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${booking.numberOfGuests} guest${booking.numberOfGuests > 1 ? 's' : ''}',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Colors.white70,
+                                fontSize: 13,
+                              ),
+                        ),
+                      ],
+                    ),
+                    if (booking.purpose != null && booking.purpose!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.description,
+                            color: Colors.white54,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              booking.purpose!,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(booking.status).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        booking.status.name.toUpperCase(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: _getStatusColor(booking.status),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
+  }
+  
+  Color _getStatusColor(BookingStatus status) {
+    switch (status) {
+      case BookingStatus.pending:
+        return Colors.orange;
+      case BookingStatus.confirmed:
+        return Colors.green;
+      case BookingStatus.cancelled:
+        return Colors.red;
+      case BookingStatus.completed:
+        return Colors.blue;
+    }
   }
 
   Widget _buildQuickInfoChips() {

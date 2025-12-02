@@ -38,10 +38,15 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
       debugPrint('⏳ Fetching bookings...');
       final bookings = await bookingProvider.getBookingsByRoomId(widget.room.id);
       debugPrint('✅ Got ${bookings.length} bookings from provider');
+      
+      // Filter untuk hari ini saja
+      final filteredBookings = _filterBookingsForToday(bookings);
+      debugPrint('📅 Filtered to ${filteredBookings.length} bookings for today');
+      
       if (mounted) {
         setState(() {
-          _bookingsFuture = Future.value(bookings);
-          debugPrint('✨ setState called with ${bookings.length} bookings');
+          _bookingsFuture = Future.value(filteredBookings);
+          debugPrint('✨ setState called with ${filteredBookings.length} bookings for today');
         });
       }
     } catch (e) {
@@ -52,6 +57,17 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         });
       }
     }
+  }
+
+  List<BookingModel> _filterBookingsForToday(List<BookingModel> bookings) {
+    final today = DateTime.now();
+    
+    return bookings.where((booking) {
+      // Check if booking's checkInDate is today
+      return booking.checkInDate.day == today.day && 
+             booking.checkInDate.month == today.month &&
+             booking.checkInDate.year == today.year;
+    }).toList();
   }
   
   @override
@@ -239,7 +255,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   }
 
   Widget _buildScheduleList() {
-    debugPrint('🔨 _buildScheduleList called, future state: ${_bookingsFuture.toString().substring(0, 50)}...');
+    debugPrint('🔨 _buildScheduleList called');
     return FutureBuilder<List<BookingModel>>(
       future: _bookingsFuture,
       builder: (context, snapshot) {
@@ -619,6 +635,21 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
       return;
     }
 
+    // Validate selected date is not in the past
+    final today = DateTime.now();
+    final selectedDateOnly = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
+    final todayOnly = DateTime(today.year, today.month, today.day);
+    
+    if (selectedDateOnly.isBefore(todayOnly)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Cannot book dates in the past'),
+          backgroundColor: AppColors.errorRedDark,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isBooking = true);
 
     try {
@@ -632,6 +663,11 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
       final endTime = _calculateEndTime();
       final checkOutDate = _selectedDate.add(const Duration(days: 1));
 
+      debugPrint('🔍 Attempting booking:');
+      debugPrint('   Date: ${_selectedDate.toString().split(' ')[0]}');
+      debugPrint('   Time: ${_timeToString(_startTime)} - ${_timeToString(endTime)}');
+      debugPrint('   Guests: $_guestCount');
+
       await bookingProvider.createBooking(
         userId: authProvider.user!.uid,
         roomId: widget.room.id,
@@ -644,6 +680,8 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
       );
 
       if (mounted) {
+        // Reload bookings before popping
+        await _loadBookings();
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -653,11 +691,20 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
         );
       }
     } catch (e) {
+      debugPrint('❌ Booking error: $e');
       if (mounted) {
+        final errorMessage = e.toString();
+        final displayMessage = errorMessage.contains('not available for the selected') 
+          ? 'Time slot is already booked! Please select another time.'
+          : errorMessage.contains('exceeds room capacity')
+          ? errorMessage
+          : 'Booking failed: $errorMessage';
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Booking failed: ${e.toString()}'),
+            content: Text(displayMessage),
             backgroundColor: AppColors.errorRedDark,
+            duration: const Duration(seconds: 4),
           ),
         );
       }

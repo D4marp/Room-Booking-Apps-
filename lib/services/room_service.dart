@@ -227,14 +227,15 @@ class RoomService {
 
   // Check room availability for specific dates
   static Future<bool> isRoomAvailable(
-      String roomId, DateTime checkIn, DateTime checkOut) async {
+      String roomId, DateTime checkIn, DateTime checkOut, 
+      {String? checkInTime, String? checkOutTime}) async {
     try {
       // Check if room exists and is available
       RoomModel? room = await getRoomById(roomId);
       if (room == null || !room.isAvailable) return false;
 
       // For room booking (same-day bookings), check time conflict
-      // Get all active bookings for this room on the same day
+      // Get all active bookings for this room
       QuerySnapshot existingBookings = await _firestore
           .collection('bookings')
           .where('roomId', isEqualTo: roomId)
@@ -242,8 +243,10 @@ class RoomService {
 
       // Get the date (without time) for the requested booking
       final requestedDate = DateTime(checkIn.year, checkIn.month, checkIn.day);
-      final requestedCheckInTime = '${checkIn.hour.toString().padLeft(2, '0')}:${checkIn.minute.toString().padLeft(2, '0')}';
-      final requestedCheckOutTime = '${checkOut.hour.toString().padLeft(2, '0')}:${checkOut.minute.toString().padLeft(2, '0')}';
+      
+      // Use provided time strings if available, otherwise extract from DateTime
+      final requestedCheckInTime = checkInTime ?? '${checkIn.hour.toString().padLeft(2, '0')}:${checkIn.minute.toString().padLeft(2, '0')}';
+      final requestedCheckOutTime = checkOutTime ?? '${checkOut.hour.toString().padLeft(2, '0')}:${checkOut.minute.toString().padLeft(2, '0')}';
 
       debugPrint('🔍 Checking availability for room $roomId');
       debugPrint('   Requested: ${requestedDate.toString().split(' ')[0]} $requestedCheckInTime - $requestedCheckOutTime');
@@ -265,6 +268,9 @@ class RoomService {
           final requestedOutMinutes = _timeToMinutes(requestedCheckOutTime);
           final existingInMinutes = _timeToMinutes(existingCheckInTime);
           final existingOutMinutes = _timeToMinutes(existingCheckOutTime);
+
+          debugPrint('   Requested minutes: $requestedInMinutes - $requestedOutMinutes');
+          debugPrint('   Existing minutes: $existingInMinutes - $existingOutMinutes');
 
           // Check if time slots overlap
           // Overlap occurs if: new_start < existing_end AND new_end > existing_start

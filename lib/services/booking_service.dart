@@ -26,9 +26,15 @@ class BookingService {
       
       // Check room availability first
       bool isAvailable =
-          await RoomService.isRoomAvailable(roomId, checkInDate, checkOutDate);
+          await RoomService.isRoomAvailable(
+            roomId, 
+            checkInDate, 
+            checkOutDate,
+            checkInTime: checkInTime,
+            checkOutTime: checkOutTime,
+          );
       if (!isAvailable) {
-        throw 'Room is not available for the selected dates.';
+        throw 'Room is not available for the selected times. Time slot already booked.';
       }
 
       // Get room details for the booking

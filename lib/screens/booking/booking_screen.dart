@@ -74,14 +74,10 @@ class _BookingScreenState extends State<BookingScreen> {
       final endTime = _calculateEndTime();
       final endTimeStr = '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
 
-      // Same day for check-in and check-out
-      final checkOutDate = _bookingDate;
-
       final bookingId = await bookingProvider.createBooking(
         userId: userId,
         roomId: roomId,
-        checkInDate: _bookingDate!,
-        checkOutDate: checkOutDate!,
+        bookingDate: _bookingDate!,
         checkInTime: startTimeStr,
         checkOutTime: endTimeStr,
         numberOfGuests: _guestCount,

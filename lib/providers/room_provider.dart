@@ -169,9 +169,9 @@ class RoomProvider extends ChangeNotifier {
 
   // Check room availability
   Future<bool> checkRoomAvailability(
-      String roomId, DateTime checkIn, DateTime checkOut) async {
+      String roomId, DateTime bookingDate) async {
     try {
-      return await RoomService.isRoomAvailable(roomId, checkIn, checkOut);
+      return await RoomService.isRoomAvailable(roomId, bookingDate);
     } catch (e) {
       _setError(e.toString());
       return false;

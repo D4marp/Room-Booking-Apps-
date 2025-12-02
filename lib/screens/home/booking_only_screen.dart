@@ -790,13 +790,11 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
       }
 
       final endTime = _calculateEndTime();
-      final checkOutDate = _selectedDate.add(const Duration(days: 1));
 
       await bookingProvider.createBooking(
         userId: authProvider.user!.uid,
         roomId: widget.room.id,
-        checkInDate: _selectedDate,
-        checkOutDate: checkOutDate,
+        bookingDate: _selectedDate,
         checkInTime: _timeToString(_startTime),
         checkOutTime: _timeToString(endTime),
         numberOfGuests: _guestCount,

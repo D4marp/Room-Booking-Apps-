@@ -9,8 +9,7 @@ class BookingModel {
   final String id;
   final String userId;
   final String roomId;
-  final DateTime checkInDate;
-  final DateTime checkOutDate;
+  final DateTime bookingDate; // Tanggal booking (same day booking only)
   final String checkInTime;  // Format: "HH:mm" e.g., "14:00"
   final String checkOutTime; // Format: "HH:mm" e.g., "11:00"
   final int numberOfGuests;
@@ -28,8 +27,7 @@ class BookingModel {
     required this.id,
     required this.userId,
     required this.roomId,
-    required this.checkInDate,
-    required this.checkOutDate,
+    required this.bookingDate,
     required this.checkInTime,
     required this.checkOutTime,
     required this.numberOfGuests,
@@ -47,10 +45,8 @@ class BookingModel {
       id: json['id'] ?? '',
       userId: json['userId'] ?? '',
       roomId: json['roomId'] ?? '',
-      checkInDate:
-          DateTime.fromMillisecondsSinceEpoch(json['checkInDate'] ?? 0),
-      checkOutDate:
-          DateTime.fromMillisecondsSinceEpoch(json['checkOutDate'] ?? 0),
+      bookingDate:
+          DateTime.fromMillisecondsSinceEpoch(json['bookingDate'] ?? 0),
       checkInTime: json['checkInTime'] ?? '08:00',
       checkOutTime: json['checkOutTime'] ?? '17:00',
       numberOfGuests: json['numberOfGuests'] ?? 1,
@@ -74,8 +70,7 @@ class BookingModel {
       'id': id,
       'userId': userId,
       'roomId': roomId,
-      'checkInDate': checkInDate.millisecondsSinceEpoch,
-      'checkOutDate': checkOutDate.millisecondsSinceEpoch,
+      'bookingDate': bookingDate.millisecondsSinceEpoch,
       'checkInTime': checkInTime,
       'checkOutTime': checkOutTime,
       'numberOfGuests': numberOfGuests,
@@ -93,8 +88,7 @@ class BookingModel {
     String? id,
     String? userId,
     String? roomId,
-    DateTime? checkInDate,
-    DateTime? checkOutDate,
+    DateTime? bookingDate,
     String? checkInTime,
     String? checkOutTime,
     int? numberOfGuests,
@@ -110,8 +104,7 @@ class BookingModel {
       id: id ?? this.id,
       userId: userId ?? this.userId,
       roomId: roomId ?? this.roomId,
-      checkInDate: checkInDate ?? this.checkInDate,
-      checkOutDate: checkOutDate ?? this.checkOutDate,
+      bookingDate: bookingDate ?? this.bookingDate,
       checkInTime: checkInTime ?? this.checkInTime,
       checkOutTime: checkOutTime ?? this.checkOutTime,
       numberOfGuests: numberOfGuests ?? this.numberOfGuests,
@@ -126,8 +119,6 @@ class BookingModel {
   }
 
   // Computed properties
-  int get numberOfDays => checkOutDate.difference(checkInDate).inDays;
-
   String get statusDisplayName {
     switch (status) {
       case BookingStatus.pending:
@@ -149,13 +140,12 @@ class BookingModel {
     return status == BookingStatus.confirmed;
   }
 
-  String get formattedDateRange {
-    final startDate = '${checkInDate.day}/${checkInDate.month}/${checkInDate.year}';
-    final endDate = '${checkOutDate.day}/${checkOutDate.month}/${checkOutDate.year}';
-    return '$startDate - $endDate';
+  String get formattedDate {
+    return '${bookingDate.day}/${bookingDate.month}/${bookingDate.year}';
   }
 
   String get formattedTimeRange {
     return '$checkInTime - $checkOutTime';
   }
 }
+

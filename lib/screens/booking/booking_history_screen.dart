@@ -346,10 +346,9 @@ class _BookingDetailsSheet extends StatelessWidget {
 
                     // Booking Details
                     _buildDetailRow(
-                        'Check-in', _formatDate(booking.checkInDate)),
+                        'Date', _formatDate(booking.bookingDate)),
                     _buildDetailRow(
-                        'Check-out', _formatDate(booking.checkOutDate)),
-                    _buildDetailRow('Duration', '${booking.numberOfDays} ${booking.numberOfDays > 1 ? 'days' : 'day'}'),
+                        'Time', '${booking.checkInTime} - ${booking.checkOutTime}'),
                     _buildDetailRow('Guests', '${booking.numberOfGuests}'),
                     if (booking.purpose != null && booking.purpose!.isNotEmpty)
                       _buildDetailRow('Purpose', booking.purpose!),

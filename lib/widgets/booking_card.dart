@@ -128,28 +128,20 @@ class BookingCard extends StatelessWidget {
                     const SizedBox(height: AppSpacing.sm),
                   ],
 
-                  // Booking dates
+                  // Booking date
                   Row(
                     children: [
-                      Expanded(
-                        child: _buildDateInfo(
-                          'Check-in',
-                          booking.checkInDate,
-                          Icons.login,
-                        ),
+                      Icon(
+                        Icons.calendar_today,
+                        size: 16,
+                        color: AppColors.secondaryText,
                       ),
-                      Container(
-                        width: 1,
-                        height: 30,
-                        color: Colors.grey.shade300,
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm),
-                      ),
-                      Expanded(
-                        child: _buildDateInfo(
-                          'Check-out',
-                          booking.checkOutDate,
-                          Icons.logout,
+                      const SizedBox(width: 6),
+                      Text(
+                        DateFormat('dd MMM yyyy').format(booking.bookingDate),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.primaryText,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -160,11 +152,6 @@ class BookingCard extends StatelessWidget {
                   // Booking details row
                   Row(
                     children: [
-                      _buildInfoChip(
-                        '${booking.numberOfDays} ${booking.numberOfDays == 1 ? 'day' : 'days'}',
-                        Icons.calendar_today,
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
                       _buildInfoChip(
                         '${booking.numberOfGuests} ${booking.numberOfGuests == 1 ? 'guest' : 'guests'}',
                         Icons.people,
@@ -268,48 +255,6 @@ class BookingCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildDateInfo(String label, DateTime date, IconData icon) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: AppColors.secondaryText,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.secondaryText,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(
-          DateFormat('dd MMM').format(date),
-          style: const TextStyle(
-            color: AppColors.primaryText,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        Text(
-          DateFormat('yyyy').format(date),
-          style: const TextStyle(
-            color: AppColors.secondaryText,
-            fontSize: 12,
-          ),
-        ),
-      ],
     );
   }
 

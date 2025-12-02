@@ -14,8 +14,7 @@ class BookingService {
   static Future<String> createBooking({
     required String userId,
     required String roomId,
-    required DateTime checkInDate,
-    required DateTime checkOutDate,
+    required DateTime bookingDate,
     required String checkInTime,
     required String checkOutTime,
     required int numberOfGuests,
@@ -28,8 +27,7 @@ class BookingService {
       bool isAvailable =
           await RoomService.isRoomAvailable(
             roomId, 
-            checkInDate, 
-            checkOutDate,
+            bookingDate,
             checkInTime: checkInTime,
             checkOutTime: checkOutTime,
           );
@@ -53,8 +51,7 @@ class BookingService {
         id: bookingId,
         userId: userId,
         roomId: roomId,
-        checkInDate: checkInDate,
-        checkOutDate: checkOutDate,
+        bookingDate: bookingDate,
         checkInTime: checkInTime,
         checkOutTime: checkOutTime,
         numberOfGuests: numberOfGuests,
@@ -68,7 +65,7 @@ class BookingService {
 
       debugPrint('💾 Saving booking to Firestore...');
       debugPrint('   Booking ID: $bookingId');
-      debugPrint('   Room: ${room.name}, Date: ${checkInDate.toString().split(' ')[0]}');
+      debugPrint('   Room: ${room.name}, Date: ${bookingDate.toString().split(' ')[0]}');
       debugPrint('   Time: $checkInTime - $checkOutTime, Guests: $numberOfGuests');
       
       await _firestore

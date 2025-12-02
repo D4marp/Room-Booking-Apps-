@@ -226,16 +226,16 @@ class RoomService {
     }
   }
 
-  // Check room availability for specific dates
+  // Check room availability for specific date and time
   static Future<bool> isRoomAvailable(
-      String roomId, DateTime checkIn, DateTime checkOut, 
+      String roomId, DateTime bookingDate, 
       {String? checkInTime, String? checkOutTime}) async {
     try {
       // Check if room exists and is available
       RoomModel? room = await getRoomById(roomId);
       if (room == null || !room.isAvailable) return false;
 
-      // For room booking (same-day bookings), check time conflict
+      // For same-day bookings, check time conflict
       // Get all active bookings for this room
       QuerySnapshot existingBookings = await _firestore
           .collection('bookings')
@@ -243,22 +243,22 @@ class RoomService {
           .where('status', whereIn: ['pending', 'confirmed']).get();
 
       // Get the date (without time) for the requested booking
-      final requestedDate = DateTime(checkIn.year, checkIn.month, checkIn.day);
+      final requestedDate = DateTime(bookingDate.year, bookingDate.month, bookingDate.day);
       
-      // Use provided time strings if available, otherwise extract from DateTime
-      final requestedCheckInTime = checkInTime ?? '${checkIn.hour.toString().padLeft(2, '0')}:${checkIn.minute.toString().padLeft(2, '0')}';
-      final requestedCheckOutTime = checkOutTime ?? '${checkOut.hour.toString().padLeft(2, '0')}:${checkOut.minute.toString().padLeft(2, '0')}';
+      // Use provided time strings if available
+      final requestedCheckInTime = checkInTime ?? '08:00';
+      final requestedCheckOutTime = checkOutTime ?? '17:00';
 
       debugPrint('🔍 Checking availability for room $roomId');
       debugPrint('   Requested: ${requestedDate.toString().split(' ')[0]} $requestedCheckInTime - $requestedCheckOutTime');
 
       for (var booking in existingBookings.docs) {
         final data = booking.data() as Map<String, dynamic>;
-        final existingCheckInDate = DateTime.fromMillisecondsSinceEpoch(data['checkInDate']);
-        final existingCheckInDateOnly = DateTime(existingCheckInDate.year, existingCheckInDate.month, existingCheckInDate.day);
+        final existingBookingDate = DateTime.fromMillisecondsSinceEpoch(data['bookingDate']);
+        final existingDateOnly = DateTime(existingBookingDate.year, existingBookingDate.month, existingBookingDate.day);
         
         // Only check time conflict if booking is on the same day
-        if (requestedDate.isAtSameMomentAs(existingCheckInDateOnly)) {
+        if (requestedDate.isAtSameMomentAs(existingDateOnly)) {
           final existingCheckInTime = data['checkInTime'] as String? ?? '00:00';
           final existingCheckOutTime = data['checkOutTime'] as String? ?? '00:00';
 

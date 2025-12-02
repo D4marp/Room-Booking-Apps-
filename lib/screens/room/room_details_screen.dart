@@ -63,10 +63,10 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     final today = DateTime.now();
     
     return bookings.where((booking) {
-      // Check if booking's checkInDate is today
-      return booking.checkInDate.day == today.day && 
-             booking.checkInDate.month == today.month &&
-             booking.checkInDate.year == today.year;
+      // Check if booking's bookingDate is today
+      return booking.bookingDate.day == today.day && 
+             booking.bookingDate.month == today.month &&
+             booking.bookingDate.year == today.year;
     }).toList();
   }
   
@@ -671,7 +671,6 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
       }
 
       final endTime = _calculateEndTime();
-      final checkOutDate = _selectedDate.add(const Duration(days: 1));
 
       debugPrint('🔍 Attempting booking:');
       debugPrint('   Room ID: ${widget.room.id}');
@@ -682,8 +681,7 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
       final bookingId = await bookingProvider.createBooking(
         userId: authProvider.user!.uid,
         roomId: widget.room.id,
-        checkInDate: _selectedDate,
-        checkOutDate: checkOutDate,
+        bookingDate: _selectedDate,
         checkInTime: _timeToString(_startTime),
         checkOutTime: _timeToString(endTime),
         numberOfGuests: _guestCount,

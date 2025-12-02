@@ -77,9 +77,9 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
     
     try {
       return bookings.where((booking) {
-        return booking.checkInDate.year == today.year &&
-            booking.checkInDate.month == today.month &&
-            booking.checkInDate.day == today.day;
+        return booking.bookingDate.year == today.year &&
+            booking.bookingDate.month == today.month &&
+            booking.bookingDate.day == today.day;
       }).toList()..sort((a, b) {
         try {
           final aHour = int.parse(a.checkInTime.split(':')[0]);

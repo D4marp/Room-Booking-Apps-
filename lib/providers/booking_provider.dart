@@ -11,8 +11,7 @@ class BookingProvider extends ChangeNotifier {
 
   // Current booking being created
   BookingModel? _currentBooking;
-  DateTime? _selectedCheckInDate;
-  DateTime? _selectedCheckOutDate;
+  DateTime? _selectedBookingDate;
   int _numberOfGuests = 1;
 
   // Getters
@@ -22,8 +21,7 @@ class BookingProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   BookingModel? get currentBooking => _currentBooking;
-  DateTime? get selectedCheckInDate => _selectedCheckInDate;
-  DateTime? get selectedCheckOutDate => _selectedCheckOutDate;
+  DateTime? get selectedBookingDate => _selectedBookingDate;
   int get numberOfGuests => _numberOfGuests;
 
   // Load user bookings
@@ -46,14 +44,14 @@ class BookingProvider extends ChangeNotifier {
     final now = DateTime.now();
     _upcomingBookings = _userBookings
         .where((booking) =>
-            booking.checkInDate.isAfter(now) &&
+            booking.bookingDate.isAfter(now) &&
             (booking.status == BookingStatus.pending ||
                 booking.status == BookingStatus.confirmed))
         .toList();
 
     _pastBookings = _userBookings
         .where((booking) =>
-            booking.checkOutDate.isBefore(now) ||
+            booking.bookingDate.isBefore(now) ||
             booking.status == BookingStatus.cancelled ||
             booking.status == BookingStatus.completed)
         .toList();
@@ -63,8 +61,7 @@ class BookingProvider extends ChangeNotifier {
   Future<String?> createBooking({
     required String userId,
     required String roomId,
-    required DateTime checkInDate,
-    required DateTime checkOutDate,
+    required DateTime bookingDate,
     required String checkInTime,
     required String checkOutTime,
     required int numberOfGuests,
@@ -77,8 +74,7 @@ class BookingProvider extends ChangeNotifier {
       final bookingId = await BookingService.createBooking(
         userId: userId,
         roomId: roomId,
-        checkInDate: checkInDate,
-        checkOutDate: checkOutDate,
+        bookingDate: bookingDate,
         checkInTime: checkInTime,
         checkOutTime: checkOutTime,
         numberOfGuests: numberOfGuests,
@@ -120,21 +116,9 @@ class BookingProvider extends ChangeNotifier {
     }
   }
 
-  // Set booking dates
-  void setCheckInDate(DateTime date) {
-    _selectedCheckInDate = date;
-
-    // If check-out date is before or equal to check-in, clear it
-    if (_selectedCheckOutDate != null &&
-        _selectedCheckOutDate!.isBefore(date.add(const Duration(days: 1)))) {
-      _selectedCheckOutDate = null;
-    }
-
-    notifyListeners();
-  }
-
-  void setCheckOutDate(DateTime date) {
-    _selectedCheckOutDate = date;
+  // Set booking date
+  void setBookingDate(DateTime date) {
+    _selectedBookingDate = date;
     notifyListeners();
   }
 
@@ -144,27 +128,15 @@ class BookingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Calculate total price
-  // Get number of days (office/campus booking context)
-  int get numberOfDays {
-    if (_selectedCheckInDate == null || _selectedCheckOutDate == null) {
-      return 0;
-    }
-    return _selectedCheckOutDate!.difference(_selectedCheckInDate!).inDays;
-  }
-
-  // Check if dates are valid
-  bool get areDatesValid {
-    return _selectedCheckInDate != null &&
-        _selectedCheckOutDate != null &&
-        _selectedCheckOutDate!.isAfter(_selectedCheckInDate!);
+  // Check if date is valid
+  bool get isDateValid {
+    return _selectedBookingDate != null;
   }
 
   // Clear booking data
   void clearBookingData() {
     _currentBooking = null;
-    _selectedCheckInDate = null;
-    _selectedCheckOutDate = null;
+    _selectedBookingDate = null;
     _numberOfGuests = 1;
     notifyListeners();
   }
@@ -217,28 +189,22 @@ class BookingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Validate booking dates
-  String? validateDates() {
-    if (_selectedCheckInDate == null) {
-      return 'Please select check-in date';
+  // Validate booking date
+  String? validateDate() {
+    if (_selectedBookingDate == null) {
+      return 'Please select booking date';
     }
-    if (_selectedCheckOutDate == null) {
-      return 'Please select check-out date';
-    }
-    if (_selectedCheckInDate!.isBefore(DateTime.now())) {
-      return 'Check-in date cannot be in the past';
-    }
-    if (_selectedCheckOutDate!
-        .isBefore(_selectedCheckInDate!.add(const Duration(days: 1)))) {
-      return 'Check-out date must be at least one day after check-in';
+    if (_selectedBookingDate!.isBefore(DateTime.now())) {
+      return 'Booking date cannot be in the past';
     }
     return null;
   }
 
-  // Get minimum selectable date (tomorrow)
-  DateTime get minSelectableDate => DateTime.now().add(const Duration(days: 1));
+  // Get minimum selectable date (today)
+  DateTime get minSelectableDate => DateTime.now();
 
   // Get maximum selectable date (1 year from now)
   DateTime get maxSelectableDate =>
       DateTime.now().add(const Duration(days: 365));
 }
+

@@ -1,13 +1,26 @@
 # Firestore Security Rules Setup
 
-## Issue
+## ⚠️ Problem
 ```
 [cloud_firestore/permission-denied] The caller does not have permission to execute the specified operation.
 ```
 
-## Solution: Update Firestore Security Rules
+This happens because **Firestore security rules don't allow reading bookings**. 
 
-Go to **Firebase Console** → **Firestore Database** → **Rules** and replace with:
+## ✅ Solution: Update Firestore Security Rules
+
+### Step-by-Step Guide:
+
+#### 1️⃣ Open Firebase Console
+- Go to [Firebase Console](https://console.firebase.google.com)
+- Select your project
+- Navigate to **Firestore Database** (left sidebar)
+
+#### 2️⃣ Click on "Rules" Tab
+At the top of the Firestore Database page, click the **Rules** tab
+
+#### 3️⃣ Replace Rules with This Code
+Delete all existing rules and paste the following:
 
 ```firestore
 rules_version = '2';
@@ -35,17 +48,68 @@ service cloud.firestore {
 }
 ```
 
-## Steps:
-1. Open [Firebase Console](https://console.firebase.google.com)
-2. Go to your project → Firestore Database
-3. Click on **Rules** tab
-4. Replace entire content with rules above
-5. Click **Publish**
-6. Test in app (should work now!)
+#### 4️⃣ Click "Publish"
+Click the **Publish** button to apply the new rules
 
-## What these rules allow:
-✅ Authenticated users can read all bookings
-✅ Users can create bookings (auto-assigned to their userId)
-✅ Users can only modify their own bookings
-✅ Admin can modify rooms
-✅ All authenticated users can read rooms
+#### 5️⃣ Test in App
+- Hot restart the app (or rebuild)
+- Navigate to a room and click "Book Now"
+- Schedule should now load properly
+- Booking should save to Firestore successfully
+
+---
+
+## 🔐 What These Rules Allow:
+
+| Action | Allowed | Notes |
+|--------|---------|-------|
+| ✅ Read Bookings | Authenticated users | Can see all bookings |
+| ✅ Create Booking | Authenticated users | Must use own userId |
+| ✅ Edit Own Booking | User who created it | Only own booking |
+| ✅ Delete Own Booking | User who created it | Only own booking |
+| ✅ Read Rooms | Authenticated users | Can see all rooms |
+| ✅ Write Rooms | Admin only | Admin token required |
+| ✅ Read User Profile | Own user only | Privacy protected |
+
+---
+
+## 🧪 Verification Checklist
+
+After publishing rules, verify:
+- [ ] App doesn't show "Permission Denied" error
+- [ ] Schedule loads properly in RoomDetailsScreen
+- [ ] "Book Now" button works
+- [ ] Bookings appear in Firestore console under `/bookings` collection
+- [ ] Debug console shows: `✅ Booking saved successfully to Firestore`
+
+---
+
+## 🐛 If Still Not Working:
+
+1. **Check Firestore Console** → Make sure rules are published (should show green checkmark)
+2. **Check user authentication** → Verify user is logged in
+3. **Check network** → Verify device has internet connection
+4. **Rebuild app** → Do full rebuild, not just hot restart:
+   ```bash
+   flutter clean
+   flutter pub get
+   flutter run
+   ```
+5. **Check Firebase project** → Verify project ID matches in `google-services.json`/`GoogleService-Info.plist`
+
+---
+
+## 📱 Expected Behavior After Setup
+
+**Before Setup:**
+```
+❌ Error fetching bookings for room...
+⚠️ Permission denied! Check Firestore security rules.
+```
+
+**After Setup:**
+```
+✅ Booking saved successfully to Firestore
+📅 RoomDetailsScreen: Loaded 1 bookings for room fzjyGq62qx3gQeDZ0s23
+```
+

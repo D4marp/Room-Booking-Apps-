@@ -1,0 +1,38 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users collection - only user can read/write own data
+    match /users/{userId} {
+      allow read, write: if request.auth.uid == userId;
+    }
+    
+    // Rooms collection - anyone can read, only admins can write
+    match /rooms/{document=**} {
+      allow read: if true;
+      allow write: if request.auth != null && 
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    // Bookings collection - all authenticated users can READ all bookings
+    // Users can CREATE their own, UPDATE/DELETE only their own
+    match /bookings/{bookingId} {
+      // ALL authenticated users can read all bookings (to see room schedules)
+      allow read: if request.auth != null;
+      
+      // Users can create bookings (must use their own userId)
+      allow create: if request.auth != null && 
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Users can update/delete only their own bookings, admins can do both
+      allow update, delete: if request.auth != null && 
+                               (resource.data.userId == request.auth.uid || 
+                                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Block everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

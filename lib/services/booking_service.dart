@@ -338,7 +338,11 @@ class BookingService {
       String errorMsg = e.toString();
       if (errorMsg.contains('permission-denied')) {
         debugPrint('⚠️  Permission denied! Check Firestore security rules.');
-        debugPrint('📋 See FIRESTORE_RULES.md for setup instructions.');
+        debugPrint('📋 See FIRESTORE_RULES_FIXED.txt for setup instructions.');
+      } else if (errorMsg.contains('failed-precondition')) {
+        debugPrint('⚠️  Missing Firestore Index! This is required for queries with WHERE + ORDER BY.');
+        debugPrint('📋 See FIRESTORE_INDEX_SETUP.txt for instructions to create index.');
+        debugPrint('🔗 The error message contains a direct link to create the index.');
       }
       debugPrint('❌ Error fetching bookings for room $roomId: $e');
       throw 'Error fetching bookings for room: $e';

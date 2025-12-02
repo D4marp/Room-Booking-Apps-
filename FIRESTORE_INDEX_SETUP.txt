@@ -1,0 +1,125 @@
+================================================================================
+🔧 FIRESTORE INDEX SETUP - CRITICAL ISSUE
+================================================================================
+
+❌ PROBLEM:
+The query requires an index for:
+- Collection: bookings
+- Where: roomId == "fzjyGq62qx3gQeDZ0s23"
+- Order By: checkInDate
+
+This is because Firestore requires composite indexes for queries that have:
+✗ WHERE clause (filter)
+✗ ORDER BY clause (sorting)
+
+Data SUDAH ada di Firestore, tapi query tertahan karena index belum created.
+
+================================================================================
+✅ SOLUTION: Create Composite Index
+================================================================================
+
+OPTION A: AUTO CREATE (EASIEST)
+─────────────────────────────────────────────────────────────────────────────
+
+1. Lihat error message di logcat/console
+2. Cari link: https://console.firebase.google.com/v1/r/project/...
+3. Copy-paste link ke browser
+4. Firebase Console akan open
+5. Klik tombol "CREATE INDEX" (biru)
+6. Tunggu index creation selesai (1-2 menit)
+7. Back ke app, hot restart
+8. Test: schedule harus muncul sekarang!
+
+─────────────────────────────────────────────────────────────────────────────
+
+OPTION B: MANUAL CREATE
+─────────────────────────────────────────────────────────────────────────────
+
+1. Buka Firebase Console: https://console.firebase.google.com
+2. Pilih project: "booking-room-system1"
+3. Firestore Database (menu kiri)
+4. Klik tab "INDEXES" (di sebelah "Data")
+5. Klik tombol "Create Index"
+6. Isi form:
+
+   Field 1:
+   ├─ Collection ID: bookings
+   ├─ Field: roomId
+   └─ Direction: Ascending ⬆️
+
+   Field 2:
+   ├─ Field: checkInDate
+   └─ Direction: Ascending ⬆️
+
+7. Klik "CREATE INDEX" button (biru)
+8. Tunggu sampai selesai (status akan berubah jadi "Enabled")
+
+─────────────────────────────────────────────────────────────────────────────
+
+OPTION C: CREATE FROM FIRESTORE RULES TAB
+─────────────────────────────────────────────────────────────────────────────
+
+Firestore sometimes suggest index creation dari Rules tab.
+Cek di Firestore > Rules tab, ada suggestion untuk create index.
+
+================================================================================
+AFTER INDEX CREATED:
+================================================================================
+
+1. Hot restart app (atau flutter run)
+2. Navigate ke room details
+3. Schedule section akan load dengan data
+4. Debug output:
+   ✅ "🔍 Fetching bookings for room: fzjyGq62qx3gQeDZ0s23"
+   ✅ "📊 Found 1 bookings in Firestore for room fzjyGq62qx3gQeDZ0s23"
+   ✅ "✅ Got 1 bookings from provider"
+   ✅ Booking terlihat di schedule dengan waktu, guest, status
+
+================================================================================
+FIRESTORE INDEX EXPLAINED:
+================================================================================
+
+Why needed?
+───────────
+Firestore requires indexes untuk queries dengan:
+- 1+ filter (WHERE)
+- 1+ sorting (ORDER BY)
+- Atau 1+ filtering + 1+ sorting
+
+Tanpa index = query fails dengan "failed-precondition"
+
+Index di-create untuk:
+- Optimize query performance
+- Ensure consistent ordering
+- Handle large datasets efficiently
+
+================================================================================
+VERIFICATION:
+================================================================================
+
+Setelah index created, cek di Firebase Console:
+
+Firestore > Indexes tab
+└─ Composite Indexes
+   └─ bookings (roomId Ascending, checkInDate Ascending)
+      Status: Enabled ✅
+
+Jika sudah "Enabled", query akan work.
+
+================================================================================
+COMMON ISSUES:
+================================================================================
+
+Issue: Index creation takes too long
+→ Normal, bisa sampai 5 menit untuk dataset besar
+→ Keep app running, akan auto-retry
+
+Issue: Still getting same error after index created
+→ Hot restart not enough, do: flutter clean && flutter run
+→ Atau close app completely dan reopen
+
+Issue: Can't find Indexes tab
+→ Make sure di Firestore Database (bukan Realtime Database)
+→ Tab ada di top: Data | Rules | Indexes | Settings
+
+================================================================================

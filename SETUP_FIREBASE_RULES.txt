@@ -1,0 +1,96 @@
+================================================================================
+FIREBASE FIRESTORE SECURITY RULES SETUP
+================================================================================
+
+MASALAH SEKARANG:
+- ❌ Bookings: TIDAK bisa READ/WRITE (permission-denied)
+- ✅ Rooms: Bisa READ
+- ✅ Users: Bisa READ (sendiri)
+
+SOLUSI: Update Firestore Security Rules
+
+================================================================================
+LANGKAH-LANGKAH:
+================================================================================
+
+1. Buka Firebase Console: https://console.firebase.google.com
+2. Pilih project "Room Booking Apps" (atau nama project Anda)
+3. Klik "Firestore Database" di menu kiri
+4. Klik tab "Rules" (di atas "Data")
+5. Hapus semua rules yang ada
+6. PASTE rules di bawah ini:
+
+================================================================================
+FIRESTORE RULES (COPY-PASTE):
+================================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow authenticated users to read all collections
+    match /rooms/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.token.admin == true;
+    }
+    
+    match /bookings/{document=**} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && 
+                       request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null && 
+                               resource.data.userId == request.auth.uid;
+    }
+    
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == userId;
+    }
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+================================================================================
+SETELAH PASTE:
+================================================================================
+
+7. Klik tombol "Publish" (warna biru, atas kanan)
+8. Tunggu sampai publish selesai (akan ada checkmark hijau)
+9. Close Firebase Console
+10. Di app: Tekan F5 atau flutter hot restart
+11. Coba Book Now lagi - seharusnya sudah bisa!
+
+================================================================================
+EXPECTED OUTPUT SETELAH BERHASIL:
+================================================================================
+
+✅ Booking saved successfully to Firestore
+📅 RoomDetailsScreen: Loaded 1 bookings for room fzjyGq62qx3gQeDZ0s23
+   - 08:00 to 17:00 | Status: confirmed
+
+================================================================================
+KALAU MASIH ERROR:
+================================================================================
+
+Coba flutter clean dulu:
+  1. Buka terminal di folder project
+  2. Jalankan: flutter clean
+  3. Jalankan: flutter pub get
+  4. Jalankan: flutter run
+
+================================================================================
+RULES EXPLANATION:
+================================================================================
+
+✅ /rooms - Semua user authenticated bisa READ
+✅ /bookings - Semua user authenticated bisa READ
+✅ /bookings - User bisa CREATE booking (harus gunakan userId mereka)
+✅ /bookings - User hanya bisa UPDATE/DELETE booking mereka sendiri
+✅ /users - User bisa READ all users
+✅ /users - User hanya bisa WRITE profile mereka sendiri
+
+================================================================================

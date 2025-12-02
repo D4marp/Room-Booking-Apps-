@@ -257,6 +257,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         if (snapshot.hasError) {
           final error = snapshot.error.toString();
           final isPermissionError = error.contains('permission-denied');
+          final isIndexError = error.contains('failed-precondition');
           debugPrint('❌ FutureBuilder error: $error');
           
           return Center(
@@ -266,7 +267,11 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    isPermissionError ? Icons.lock_outline : Icons.error_outline,
+                    isPermissionError 
+                        ? Icons.lock_outline 
+                        : isIndexError
+                            ? Icons.settings_suggest
+                            : Icons.error_outline,
                     color: Colors.red.shade300,
                     size: 48,
                   ),
@@ -274,7 +279,9 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                   Text(
                     isPermissionError 
                         ? 'Permission Denied'
-                        : 'Error Loading Schedule',
+                        : isIndexError
+                            ? 'Firestore Index Required'
+                            : 'Error Loading Schedule',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -283,8 +290,10 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                   const SizedBox(height: 8),
                   Text(
                     isPermissionError
-                        ? 'Check Firestore security rules.\nSee FIRESTORE_RULES.md'
-                        : 'Failed to load bookings',
+                        ? 'Check Firestore security rules.\nSee FIRESTORE_RULES_FIXED.txt'
+                        : isIndexError
+                            ? 'Create composite index in Firestore.\nSee FIRESTORE_INDEX_SETUP.txt or check logcat for link'
+                            : 'Failed to load bookings',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.white54,

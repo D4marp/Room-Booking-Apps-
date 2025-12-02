@@ -247,7 +247,12 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
             ),
           ),
           Expanded(
-            child: _buildScheduleList(),
+            child: RefreshIndicator(
+              onRefresh: _loadBookings,
+              color: AppColors.primaryRed,
+              backgroundColor: Colors.white,
+              child: _buildScheduleList(),
+            ),
           ),
         ],
       ),

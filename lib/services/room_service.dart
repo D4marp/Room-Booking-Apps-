@@ -233,29 +233,65 @@ class RoomService {
       RoomModel? room = await getRoomById(roomId);
       if (room == null || !room.isAvailable) return false;
 
-      // Check for existing bookings that conflict with the requested dates
+      // For room booking (same-day bookings), check time conflict
+      // Get all active bookings for this room on the same day
       QuerySnapshot existingBookings = await _firestore
           .collection('bookings')
           .where('roomId', isEqualTo: roomId)
           .where('status', whereIn: ['pending', 'confirmed']).get();
 
+      // Get the date (without time) for the requested booking
+      final requestedDate = DateTime(checkIn.year, checkIn.month, checkIn.day);
+      final requestedCheckInTime = '${checkIn.hour.toString().padLeft(2, '0')}:${checkIn.minute.toString().padLeft(2, '0')}';
+      final requestedCheckOutTime = '${checkOut.hour.toString().padLeft(2, '0')}:${checkOut.minute.toString().padLeft(2, '0')}';
+
+      debugPrint('🔍 Checking availability for room $roomId');
+      debugPrint('   Requested: ${requestedDate.toString().split(' ')[0]} $requestedCheckInTime - $requestedCheckOutTime');
+
       for (var booking in existingBookings.docs) {
         final data = booking.data() as Map<String, dynamic>;
-        final existingCheckIn =
-            DateTime.fromMillisecondsSinceEpoch(data['checkInDate']);
-        final existingCheckOut =
-            DateTime.fromMillisecondsSinceEpoch(data['checkOutDate']);
+        final existingCheckInDate = DateTime.fromMillisecondsSinceEpoch(data['checkInDate']);
+        final existingCheckInDateOnly = DateTime(existingCheckInDate.year, existingCheckInDate.month, existingCheckInDate.day);
+        
+        // Only check time conflict if booking is on the same day
+        if (requestedDate.isAtSameMomentAs(existingCheckInDateOnly)) {
+          final existingCheckInTime = data['checkInTime'] as String? ?? '00:00';
+          final existingCheckOutTime = data['checkOutTime'] as String? ?? '00:00';
 
-        // Check if dates overlap
-        if (checkIn.isBefore(existingCheckOut) &&
-            checkOut.isAfter(existingCheckIn)) {
-          return false;
+          debugPrint('   Existing booking: $existingCheckInTime - $existingCheckOutTime');
+
+          // Parse times for comparison
+          final requestedInMinutes = _timeToMinutes(requestedCheckInTime);
+          final requestedOutMinutes = _timeToMinutes(requestedCheckOutTime);
+          final existingInMinutes = _timeToMinutes(existingCheckInTime);
+          final existingOutMinutes = _timeToMinutes(existingCheckOutTime);
+
+          // Check if time slots overlap
+          // Overlap occurs if: new_start < existing_end AND new_end > existing_start
+          if (requestedInMinutes < existingOutMinutes && requestedOutMinutes > existingInMinutes) {
+            debugPrint('   ❌ Time conflict detected!');
+            return false;
+          }
         }
       }
 
+      debugPrint('   ✅ No conflicts, room available');
       return true;
     } catch (e) {
       throw 'Error checking room availability: $e';
+    }
+  }
+
+  // Helper method to convert time string (HH:mm) to minutes
+  static int _timeToMinutes(String timeStr) {
+    try {
+      final parts = timeStr.split(':');
+      final hours = int.parse(parts[0]);
+      final minutes = int.parse(parts[1]);
+      return hours * 60 + minutes;
+    } catch (e) {
+      debugPrint('❌ Error parsing time $timeStr: $e');
+      return 0;
     }
   }
 

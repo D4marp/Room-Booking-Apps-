@@ -22,6 +22,10 @@ class BookingModel {
   final String? roomName;
   final String? roomLocation;
   final String? roomImageUrl;
+  
+  // User details for display
+  final String? userName;
+  final String? userEmail;
 
   BookingModel({
     required this.id,
@@ -38,6 +42,8 @@ class BookingModel {
     this.roomName,
     this.roomLocation,
     this.roomImageUrl,
+    this.userName,
+    this.userEmail,
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +68,8 @@ class BookingModel {
       roomName: json['roomName'],
       roomLocation: json['roomLocation'],
       roomImageUrl: json['roomImageUrl'],
+      userName: json['userName'],
+      userEmail: json['userEmail'],
     );
   }
 
@@ -81,6 +89,8 @@ class BookingModel {
       'roomName': roomName,
       'roomLocation': roomLocation,
       'roomImageUrl': roomImageUrl,
+      'userName': userName,
+      'userEmail': userEmail,
     };
   }
 
@@ -99,6 +109,8 @@ class BookingModel {
     String? roomName,
     String? roomLocation,
     String? roomImageUrl,
+    String? userName,
+    String? userEmail,
   }) {
     return BookingModel(
       id: id ?? this.id,
@@ -115,6 +127,8 @@ class BookingModel {
       roomName: roomName ?? this.roomName,
       roomLocation: roomLocation ?? this.roomLocation,
       roomImageUrl: roomImageUrl ?? this.roomImageUrl,
+      userName: userName ?? this.userName,
+      userEmail: userEmail ?? this.userEmail,
     );
   }
 

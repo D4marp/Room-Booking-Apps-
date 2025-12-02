@@ -46,6 +46,19 @@ class BookingService {
         throw 'Number of guests exceeds room capacity (${room.maxGuests} people).';
       }
 
+      // Get user details for the booking
+      String? userName;
+      String? userEmail;
+      try {
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          userName = userDoc.data()?['name'] as String?;
+          userEmail = userDoc.data()?['email'] as String?;
+        }
+      } catch (e) {
+        debugPrint('⚠️ Warning: Could not fetch user details: $e');
+      }
+
       final bookingId = _uuid.v4();
       final booking = BookingModel(
         id: bookingId,
@@ -61,6 +74,8 @@ class BookingService {
         roomName: room.name,
         roomLocation: room.location,
         roomImageUrl: room.primaryImageUrl,
+        userName: userName,
+        userEmail: userEmail,
       );
 
       debugPrint('💾 Saving booking to Firestore...');

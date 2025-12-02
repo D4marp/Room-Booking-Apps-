@@ -128,6 +128,30 @@ class BookingCard extends StatelessWidget {
                     const SizedBox(height: AppSpacing.sm),
                   ],
 
+                  // Booked by (user name)
+                  if (booking.userName != null && booking.userName!.isNotEmpty) ...[
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.person,
+                          size: 16,
+                          color: AppColors.primaryRed,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Booked by: ${booking.userName}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.primaryRed,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
+
                   // Booking date
                   Row(
                     children: [

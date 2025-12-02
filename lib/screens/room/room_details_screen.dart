@@ -680,8 +680,6 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
       );
 
       if (mounted) {
-        // Reload bookings before popping
-        await _loadBookings();
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

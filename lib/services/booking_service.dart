@@ -335,6 +335,11 @@ class BookingService {
       
       return bookings;
     } catch (e) {
+      String errorMsg = e.toString();
+      if (errorMsg.contains('permission-denied')) {
+        debugPrint('⚠️  Permission denied! Check Firestore security rules.');
+        debugPrint('📋 See FIRESTORE_RULES.md for setup instructions.');
+      }
       debugPrint('❌ Error fetching bookings for room $roomId: $e');
       throw 'Error fetching bookings for room: $e';
     }

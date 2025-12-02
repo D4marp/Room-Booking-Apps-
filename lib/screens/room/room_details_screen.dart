@@ -26,6 +26,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    _bookingsFuture = Future.value([]);
     _loadBookings();
   }
   
@@ -33,11 +34,18 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     final bookingProvider = context.read<BookingProvider>();
     try {
       final bookings = await bookingProvider.getBookingsByRoomId(widget.room.id);
-      setState(() {
-        _bookingsFuture = Future.value(bookings);
-      });
+      if (mounted) {
+        setState(() {
+          _bookingsFuture = Future.value(bookings);
+        });
+      }
     } catch (e) {
       debugPrint('Error loading bookings: $e');
+      if (mounted) {
+        setState(() {
+          _bookingsFuture = Future.error(e);
+        });
+      }
     }
   }
   
@@ -238,12 +246,52 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         }
         
         if (snapshot.hasError) {
+          final error = snapshot.error.toString();
+          final isPermissionError = error.contains('permission-denied');
+          
           return Center(
-            child: Text(
-              'Error loading schedule',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white54,
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isPermissionError ? Icons.lock_outline : Icons.error_outline,
+                    color: Colors.red.shade300,
+                    size: 48,
                   ),
+                  const SizedBox(height: 16),
+                  Text(
+                    isPermissionError 
+                        ? 'Permission Denied'
+                        : 'Error Loading Schedule',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    isPermissionError
+                        ? 'Check Firestore security rules.\nSee FIRESTORE_RULES.md'
+                        : 'Failed to load bookings',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white54,
+                        ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => _loadBookings(),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryRed,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }

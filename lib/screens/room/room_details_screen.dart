@@ -26,21 +26,26 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    debugPrint('🚀 RoomDetailsScreen initState: Room ID = ${widget.room.id}');
     _bookingsFuture = Future.value([]);
     _loadBookings();
   }
   
   Future<void> _loadBookings() async {
+    debugPrint('📥 _loadBookings called for room: ${widget.room.id}');
     final bookingProvider = context.read<BookingProvider>();
     try {
+      debugPrint('⏳ Fetching bookings...');
       final bookings = await bookingProvider.getBookingsByRoomId(widget.room.id);
+      debugPrint('✅ Got ${bookings.length} bookings from provider');
       if (mounted) {
         setState(() {
           _bookingsFuture = Future.value(bookings);
+          debugPrint('✨ setState called with ${bookings.length} bookings');
         });
       }
     } catch (e) {
-      debugPrint('Error loading bookings: $e');
+      debugPrint('❌ Error in _loadBookings: $e');
       if (mounted) {
         setState(() {
           _bookingsFuture = Future.error(e);
@@ -234,10 +239,14 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   }
 
   Widget _buildScheduleList() {
+    debugPrint('🔨 _buildScheduleList called, future state: ${_bookingsFuture.toString().substring(0, 50)}...');
     return FutureBuilder<List<BookingModel>>(
       future: _bookingsFuture,
       builder: (context, snapshot) {
+        debugPrint('📊 FutureBuilder state: connectionState=${snapshot.connectionState}, hasData=${snapshot.hasData}, hasError=${snapshot.hasError}');
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
+          debugPrint('⏳ Still waiting for data...');
           return const Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
@@ -248,6 +257,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         if (snapshot.hasError) {
           final error = snapshot.error.toString();
           final isPermissionError = error.contains('permission-denied');
+          debugPrint('❌ FutureBuilder error: $error');
           
           return Center(
             child: Padding(

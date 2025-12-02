@@ -685,6 +685,12 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
         purpose: _purposeController.text.isNotEmpty ? _purposeController.text : null,
       );
 
+      // Check if booking creation failed
+      if (bookingId == null) {
+        final errorMsg = bookingProvider.errorMessage ?? 'Unknown error occurred';
+        throw errorMsg;
+      }
+
       debugPrint('✅ Booking created successfully with ID: $bookingId');
 
       if (mounted) {

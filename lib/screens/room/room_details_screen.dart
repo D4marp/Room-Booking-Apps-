@@ -626,11 +626,9 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
 
   Future<void> _handleBooking() async {
     if (!widget.room.isAvailable) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('This room is not available'),
-          backgroundColor: AppColors.errorRedDark,
-        ),
+      _showErrorSnackBar(
+        title: 'Room Not Available',
+        message: 'This room is currently not available for booking.',
       );
       return;
     }
@@ -641,11 +639,18 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
     final todayOnly = DateTime(today.year, today.month, today.day);
     
     if (selectedDateOnly.isBefore(todayOnly)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Cannot book dates in the past'),
-          backgroundColor: AppColors.errorRedDark,
-        ),
+      _showErrorSnackBar(
+        title: 'Invalid Date',
+        message: 'Cannot book dates in the past. Please select today or a future date.',
+      );
+      return;
+    }
+
+    // Validate guest count
+    if (_guestCount > widget.room.maxGuests) {
+      _showErrorSnackBar(
+        title: 'Exceeds Capacity',
+        message: 'Number of guests (${_guestCount}) exceeds room capacity (${widget.room.maxGuests}).',
       );
       return;
     }
@@ -657,18 +662,19 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
       final bookingProvider = context.read<BookingProvider>();
 
       if (authProvider.user == null) {
-        throw Exception('User not authenticated');
+        throw 'User not authenticated. Please login again.';
       }
 
       final endTime = _calculateEndTime();
       final checkOutDate = _selectedDate.add(const Duration(days: 1));
 
       debugPrint('🔍 Attempting booking:');
+      debugPrint('   Room ID: ${widget.room.id}');
       debugPrint('   Date: ${_selectedDate.toString().split(' ')[0]}');
       debugPrint('   Time: ${_timeToString(_startTime)} - ${_timeToString(endTime)}');
       debugPrint('   Guests: $_guestCount');
 
-      await bookingProvider.createBooking(
+      final bookingId = await bookingProvider.createBooking(
         userId: authProvider.user!.uid,
         roomId: widget.room.id,
         checkInDate: _selectedDate,
@@ -679,36 +685,155 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
         purpose: _purposeController.text.isNotEmpty ? _purposeController.text : null,
       );
 
+      debugPrint('✅ Booking created successfully with ID: $bookingId');
+
       if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Booking confirmed! ✓'),
-            backgroundColor: AppColors.successGreenDark,
-          ),
+        _showSuccessSnackBar(
+          title: 'Booking Confirmed!',
+          message: '${widget.room.name}\n${_timeToString(_startTime)} - ${_timeToString(endTime)}\n$_guestCount guest${_guestCount > 1 ? 's' : ''}',
         );
+        
+        // Pop after brief delay to show success message
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            Navigator.pop(context);
+          }
+        });
       }
     } catch (e) {
       debugPrint('❌ Booking error: $e');
+      
+      final errorString = e.toString();
+      String title = 'Booking Failed';
+      String message = 'An unexpected error occurred.';
+
+      if (errorString.contains('not available for the selected')) {
+        title = 'Time Slot Unavailable';
+        message = 'This time slot is already booked.\nPlease select another time or date.';
+      } else if (errorString.contains('exceeds room capacity')) {
+        title = 'Capacity Exceeded';
+        message = 'Too many guests for this room.\nPlease reduce guest count.';
+      } else if (errorString.contains('Room not found')) {
+        title = 'Room Not Found';
+        message = 'This room no longer exists.\nPlease try another room.';
+      } else if (errorString.contains('not authenticated')) {
+        title = 'Authentication Error';
+        message = 'You are not logged in. Please login and try again.';
+      } else if (errorString.contains('permission-denied')) {
+        title = 'Permission Denied';
+        message = 'You do not have permission to create bookings.';
+      } else {
+        message = errorString.replaceAll('Exception: ', '').replaceAll('Error creating booking: ', '');
+      }
+
       if (mounted) {
-        final errorMessage = e.toString();
-        final displayMessage = errorMessage.contains('not available for the selected') 
-          ? 'Time slot is already booked! Please select another time.'
-          : errorMessage.contains('exceeds room capacity')
-          ? errorMessage
-          : 'Booking failed: $errorMessage';
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(displayMessage),
-            backgroundColor: AppColors.errorRedDark,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        _showErrorSnackBar(title: title, message: message);
       }
     } finally {
       setState(() => _isBooking = false);
     }
+  }
+
+  void _showSuccessSnackBar({
+    required String title,
+    required String message,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.check_circle, color: Colors.white, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 36),
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        backgroundColor: Colors.green.shade700,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar({
+    required String title,
+    required String message,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.white, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 36),
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        backgroundColor: Colors.red.shade700,
+        duration: const Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   Widget _durationButton(int minutes, String label) {

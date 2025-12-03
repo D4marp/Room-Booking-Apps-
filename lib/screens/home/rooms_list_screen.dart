@@ -55,8 +55,9 @@ class _RoomsListScreenState extends State<RoomsListScreen>
       return Scaffold(
         appBar: AppBar(
           title: const Text('Select a Room'),
-          backgroundColor: Colors.black87,
+          backgroundColor: Colors.white,
           elevation: 0,
+          foregroundColor: Colors.black87,
         ),
         body: const Center(
           child: CircularProgressIndicator(
@@ -70,8 +71,9 @@ class _RoomsListScreenState extends State<RoomsListScreen>
       return Scaffold(
         appBar: AppBar(
           title: const Text('Select a Room'),
-          backgroundColor: Colors.black87,
+          backgroundColor: Colors.white,
           elevation: 0,
+          foregroundColor: Colors.black87,
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh),
@@ -92,14 +94,14 @@ class _RoomsListScreenState extends State<RoomsListScreen>
               Text(
                 'No Rooms Available',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
+                      color: AppColors.primaryText,
                     ),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Add rooms from admin panel',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white54,
+                      color: AppColors.secondaryText,
                     ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -121,8 +123,9 @@ class _RoomsListScreenState extends State<RoomsListScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Select a Room'),
-        backgroundColor: Colors.black87,
+        backgroundColor: Colors.white,
         elevation: 0,
+        foregroundColor: Colors.black87,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -134,12 +137,12 @@ class _RoomsListScreenState extends State<RoomsListScreen>
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Container(
-              color: Colors.black87,
+              color: Colors.white,
               child: TabBar(
                 controller: _tabController,
                 isScrollable: true,
                 labelColor: AppColors.primaryRed,
-                unselectedLabelColor: Colors.white54,
+                unselectedLabelColor: AppColors.secondaryText,
                 indicatorColor: AppColors.primaryRed,
                 indicatorWeight: 3,
                 tabAlignment: TabAlignment.start,
@@ -180,7 +183,7 @@ class _RoomsListScreenState extends State<RoomsListScreen>
 
   Widget _buildRoomCard(RoomModel room) {
     return Container(
-      color: Colors.black87,
+      color: Colors.white,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

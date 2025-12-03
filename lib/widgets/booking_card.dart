@@ -7,14 +7,12 @@ class BookingCard extends StatelessWidget {
   final BookingModel booking;
   final VoidCallback? onTap;
   final VoidCallback? onCancel;
-
   const BookingCard({
     super.key,
     required this.booking,
     this.onTap,
     this.onCancel,
   });
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -23,7 +21,7 @@ class BookingCard extends StatelessWidget {
         decoration: AppDecorations.cardDecoration,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          children: [ 
             // Header with booking ID and status
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
@@ -80,7 +78,6 @@ class BookingCard extends StatelessWidget {
                 ],
               ),
             ),
-
             // Room details
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
@@ -100,7 +97,6 @@ class BookingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                   ],
-
                   if (booking.roomLocation != null) ...[
                     Row(
                       children: [
@@ -127,7 +123,6 @@ class BookingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                   ],
-
                   // Booked by (user name)
                   if (booking.userName != null && booking.userName!.isNotEmpty) ...[
                     Row(
@@ -151,11 +146,10 @@ class BookingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: AppSpacing.sm),
                   ],
-
                   // Booking date
                   Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.calendar_today,
                         size: 16,
                         color: AppColors.secondaryText,
@@ -170,10 +164,7 @@ class BookingCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
-                  const SizedBox(height: AppSpacing.sm),
-
-                  // Booking details row
+                  const SizedBox(height: AppSpacing.sm),  // Booking details row
                   Row(
                     children: [
                       _buildInfoChip(
@@ -182,10 +173,8 @@ class BookingCard extends StatelessWidget {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: AppSpacing.md),
-
-                  // Booking status and time range
+                    // Booking status and time range
                   Row(
                     children: [
                       Expanded(
@@ -281,7 +270,6 @@ class BookingCard extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildInfoChip(String text, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -313,7 +301,6 @@ class BookingCard extends StatelessWidget {
       ),
     );
   }
-
   Color _getStatusColor() {
     switch (booking.status) {
       case BookingStatus.pending:

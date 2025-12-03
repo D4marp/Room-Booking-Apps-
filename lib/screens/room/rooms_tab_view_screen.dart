@@ -212,30 +212,14 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
   }
 
   Widget _buildRoomDetailTab(RoomModel room) {
-    final statusColor = room.isAvailable
-        ? const Color(0xFF2E7D32)
-        : const Color(0xFFB71C1C);
-    final statusGradient = room.isAvailable
-        ? [const Color(0xFF2E7D32), const Color(0xFF1B5E20)]
-        : [const Color(0xFFB71C1C), const Color(0xFF8B0000)];
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            statusColor.withOpacity(0.05),
-            Colors.white,
-          ],
-        ),
-      ),
-      child: Column(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Column(
         children: [
           // Header Card - Modern Design
           Expanded(
             flex: 2,
-            child: _buildModernHeader(room, statusGradient),
+            child: _buildModernHeader(room),
           ),
 
           // Bookings Schedule Section
@@ -254,22 +238,26 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
     );
   }
 
-  Widget _buildModernHeader(RoomModel room, List<Color> gradientColors) {
+  Widget _buildModernHeader(RoomModel room) {
+    final statusColor = room.isAvailable
+        ? const Color(0xFF2E7D32)
+        : const Color(0xFFB71C1C);
+
     return Container(
       margin: const EdgeInsets.all(AppSpacing.lg),
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: gradientColors,
-        ),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Colors.grey.shade200,
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: gradientColors[0].withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -283,12 +271,12 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.25),
+                  color: statusColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   _getRoomIcon(room.roomClass),
-                  color: Colors.white,
+                  color: statusColor,
                   size: 32,
                 ),
               ),
@@ -300,9 +288,9 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
                     Text(
                       room.name,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
+                            color: AppColors.primaryText,
                             fontWeight: FontWeight.bold,
-                            fontSize: 26,
+                            fontSize: 24,
                           ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -311,7 +299,7 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
                     Text(
                       room.roomClass,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
+                            color: AppColors.secondaryText,
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -326,10 +314,10 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.25),
+              color: statusColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: Colors.white.withOpacity(0.5),
+                color: statusColor.withOpacity(0.3),
                 width: 1.5,
               ),
             ),
@@ -338,14 +326,14 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
               children: [
                 Icon(
                   room.isAvailable ? Icons.check_circle : Icons.cancel,
-                  color: Colors.white,
+                  color: statusColor,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   room.isAvailable ? 'Available' : 'Booked',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
+                        color: statusColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -362,7 +350,7 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
                   children: [
                     Icon(
                       Icons.location_on,
-                      color: Colors.white.withOpacity(0.9),
+                      color: AppColors.secondaryText,
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -370,7 +358,7 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
                       child: Text(
                         '${room.location}, ${room.city}',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.95),
+                              color: AppColors.primaryText,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
@@ -384,21 +372,25 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: statusColor.withOpacity(0.3),
+                    width: 1,
+                  ),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.people,
-                      color: Colors.white,
+                      color: statusColor,
                       size: 16,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       '${room.maxGuests}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.white,
+                            color: statusColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
@@ -415,6 +407,9 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
 
   Widget _buildBookingsSchedule(RoomModel room) {
     final todayBookings = _getTodayBookings(room.id);
+    final statusColor = room.isAvailable
+        ? const Color(0xFF2E7D32)
+        : const Color(0xFFB71C1C);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -441,7 +436,7 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.grey.shade200,
+                  color: Colors.grey.shade100,
                   width: 1.5,
                 ),
               ),
@@ -451,16 +446,12 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: room.isAvailable
-                        ? AppColors.successGreenLight
-                        : AppColors.errorRedLight,
+                    color: statusColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.schedule,
-                    color: room.isAvailable
-                        ? AppColors.successGreenDark
-                        : AppColors.errorRedDark,
+                    color: statusColor,
                     size: 20,
                   ),
                 ),
@@ -519,7 +510,7 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     itemCount: todayBookings.length,
                     separatorBuilder: (context, index) => Divider(
-                      color: Colors.grey.shade200,
+                      color: Colors.grey.shade100,
                       height: 16,
                       thickness: 1,
                     ),
@@ -529,21 +520,16 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
 
                       return Container(
                         padding: const EdgeInsets.all(AppSpacing.md),
-                        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                         decoration: BoxDecoration(
                           color: isActive
-                              ? room.isAvailable
-                                  ? AppColors.successGreenLight
-                                  : AppColors.errorRedLight
-                              : AppColors.cardBackground,
+                              ? statusColor.withOpacity(0.08)
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isActive
-                                ? (room.isAvailable
-                                    ? AppColors.successGreen
-                                    : AppColors.errorRed)
-                                : AppColors.borderColor,
-                            width: isActive ? 2 : 1,
+                                ? statusColor.withOpacity(0.3)
+                                : Colors.grey.shade100,
+                            width: 1.5,
                           ),
                         ),
                         child: Column(
@@ -560,9 +546,7 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
                                       vertical: 8,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: room.isAvailable
-                                          ? AppColors.successGreen
-                                          : AppColors.errorRed,
+                                      color: statusColor,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
@@ -579,62 +563,37 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
                                   ),
                                 ),
                                 const Spacer(),
-                                if (isActive)
-                                  Flexible(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: room.isAvailable
-                                            ? AppColors.successGreenLight
-                                            : AppColors.errorRedLight,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        'Active',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(
-                                              color: room.isAvailable
-                                                  ? AppColors.successGreenDark
-                                                  : AppColors.errorRedDark,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 11,
-                                            ),
-                                      ),
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
                                     ),
-                                  )
-                                else
-                                  Flexible(
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade200,
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        booking.statusDisplayName,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(
-                                              color: Colors.grey.shade700,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 11,
-                                            ),
-                                      ),
+                                    decoration: BoxDecoration(
+                                      color: isActive
+                                          ? statusColor.withOpacity(0.15)
+                                          : Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      isActive ? 'Active' : booking.statusDisplayName,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            color: isActive
+                                                ? statusColor
+                                                : Colors.grey.shade700,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 11,
+                                          ),
                                     ),
                                   ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 10),
-                            // Guests & Purpose
+                            // Guests & User Info
                             SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: Row(
@@ -656,6 +615,37 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
                                           fontWeight: FontWeight.w500,
                                         ),
                                   ),
+                                  if (booking.userName != null && booking.userName!.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 16),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.person,
+                                            size: 16,
+                                            color: statusColor,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          ConstrainedBox(
+                                            constraints: const BoxConstraints(maxWidth: 150),
+                                            child: Text(
+                                              booking.userName!,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color: statusColor,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   if (booking.purpose != null && booking.purpose!.isNotEmpty)
                                     Padding(
                                       padding: const EdgeInsets.only(left: 16),
@@ -669,7 +659,7 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
                                           ),
                                           const SizedBox(width: 6),
                                           ConstrainedBox(
-                                            constraints: const BoxConstraints(maxWidth: 200),
+                                            constraints: const BoxConstraints(maxWidth: 150),
                                             child: Text(
                                               booking.purpose!,
                                               style: Theme.of(context)
@@ -702,17 +692,20 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
   }
 
   Widget _buildActionButtons(RoomModel room) {
+    final statusColor = room.isAvailable
+        ? const Color(0xFF2E7D32)
+        : const Color(0xFFB71C1C);
+
     return Container(
       padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, -4),
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey.shade100,
+            width: 1,
           ),
-        ],
+        ),
       ),
       child: Row(
         children: [
@@ -729,15 +722,13 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
               icon: const Icon(Icons.visibility, size: 18),
               label: const Text('View Details'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: room.isAvailable
-                    ? Colors.green.shade700
-                    : Colors.red.shade700,
+                backgroundColor: statusColor,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                elevation: 2,
+                elevation: 0,
               ),
             ),
           ),
@@ -757,18 +748,14 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
               icon: const Icon(Icons.add_circle_outline, size: 18),
               label: const Text('Book Now'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: room.isAvailable
-                    ? Colors.green.shade700
-                    : Colors.grey.shade400,
+                foregroundColor: statusColor,
                 side: BorderSide(
-                  color: room.isAvailable
-                      ? Colors.green.shade700
-                      : Colors.grey.shade300,
-                  width: 2,
+                  color: room.isAvailable ? statusColor : Colors.grey.shade300,
+                  width: 1.5,
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),

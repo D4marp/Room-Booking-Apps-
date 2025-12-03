@@ -12,6 +12,7 @@ import '../room/room_details_screen.dart';
 import '../room/rooms_tab_view_screen.dart';
 import '../profile/profile_screen.dart';
 import '../booking/booking_history_screen.dart';
+import '../booking/user_booking_screen.dart';
 import '../admin/admin_rooms_screen.dart';
 import 'booking_only_screen.dart';
 import 'rooms_list_screen.dart';
@@ -439,10 +440,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       child: RoomCard(
                         room: room,
                         onTap: () {
+                          // For User and Admin roles, go to UserBookingScreen
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) =>
-                                  RoomDetailsScreen(room: room),
+                                  UserBookingScreen(room: room),
                             ),
                           );
                         },

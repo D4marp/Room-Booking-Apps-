@@ -154,7 +154,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   }
   Widget _buildRoomDetails() {
     return Container(
-      color: Colors.black87,
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -217,13 +217,13 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
           const SizedBox(height: AppSpacing.md),
           Row(
             children: [
-              const Icon(Icons.location_on, color: Colors.white70, size: 20),
+              const Icon(Icons.location_on, color: AppColors.secondaryText, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   '${widget.room.location}, ${widget.room.city}',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
+                        color: AppColors.primaryText,
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                       ),
@@ -290,12 +290,12 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.schedule, color: Colors.white70, size: 18),
+                const Icon(Icons.schedule, color: AppColors.secondaryText, size: 18),
                 const SizedBox(width: 6),
                 Text(
                   'Schedule',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
+                        color: AppColors.primaryText,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
@@ -361,7 +361,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                             ? 'Firestore Index Required'
                             : 'Error Loading Schedule',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
+                          color: AppColors.primaryText,
                           fontWeight: FontWeight.bold,
                         ),
                   ),
@@ -374,7 +374,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                             : 'Failed to load bookings',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white54,
+                          color: AppColors.secondaryText,
                         ),
                   ),
                   const SizedBox(height: 16),
@@ -403,14 +403,14 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
               children: [
                 Icon(
                   Icons.event_available,
-                  color: Colors.white30,
+                  color: Colors.grey.shade400,
                   size: 40,
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'No bookings yet',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white54,
+                        color: AppColors.secondaryText,
                         fontSize: 14,
                       ),
                 ),
@@ -429,9 +429,9 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,7 +447,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                         Text(
                           '${booking.checkInTime} - ${booking.checkOutTime}',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Colors.white,
+                                color: AppColors.primaryText,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 15,
                               ),
@@ -459,14 +459,14 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                       children: [
                         Icon(
                           Icons.people,
-                          color: Colors.white54,
+                          color: AppColors.secondaryText,
                           size: 16,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           '${booking.numberOfGuests} guest${booking.numberOfGuests > 1 ? 's' : ''}',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.white70,
+                                color: AppColors.secondaryText,
                                 fontSize: 13,
                               ),
                         ),
@@ -478,7 +478,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                         children: [
                           Icon(
                             Icons.description,
-                            color: Colors.white54,
+                            color: AppColors.secondaryText,
                             size: 16,
                           ),
                           const SizedBox(width: 8),
@@ -486,7 +486,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                             child: Text(
                               booking.purpose!,
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.white70,
+                                    color: AppColors.secondaryText,
                                     fontSize: 13,
                                   ),
                             ),
@@ -571,12 +571,12 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
       ),
       child: Column(
         children: [
-          Icon(icon, color: Colors.white70, size: 18),
+          Icon(icon, color: AppColors.secondaryText, size: 18),
           const SizedBox(height: 6),
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white54,
+                  color: AppColors.secondaryText,
                   fontSize: 11,
                 ),
           ),
@@ -597,16 +597,14 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   Widget _buildBookButton() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: const BoxDecoration(
-        color: Colors.black87,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black54,
-            blurRadius: 8,
-            offset: Offset(0, -2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: Colors.grey.shade200,
+            width: 1,
           ),
-        ],
-      ),
+        ),
       child: SafeArea(
         child: ElevatedButton.icon(
           onPressed: widget.room.isAvailable

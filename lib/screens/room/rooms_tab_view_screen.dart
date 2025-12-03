@@ -165,7 +165,7 @@ class _RoomsTabViewScreenState extends State<RoomsTabViewScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Rooms Overview'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),

@@ -169,10 +169,6 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
               child: _buildScheduleSection(),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: _buildQuickInfoChips(),
-          ),
         ],
       ),
     );
@@ -605,6 +601,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
             width: 1,
           ),
         ),
+      ),
       child: SafeArea(
         child: ElevatedButton.icon(
           onPressed: widget.room.isAvailable

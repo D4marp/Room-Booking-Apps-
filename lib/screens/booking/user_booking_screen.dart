@@ -63,9 +63,9 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
     }
 
     // Validate selected date is not in the past
-    final today = DateTime.now();
+    final now = DateTime.now();
     final selectedDateOnly = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day);
-    final todayOnly = DateTime(today.year, today.month, today.day);
+    final todayOnly = DateTime(now.year, now.month, now.day);
     
     if (selectedDateOnly.isBefore(todayOnly)) {
       _showErrorSnackBar(
@@ -73,6 +73,22 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
         message: 'Cannot book dates in the past. Please select today or a future date.',
       );
       return;
+    }
+
+    // Validate time is not in the past (only for today's booking)
+    if (selectedDateOnly.isAtSameMomentAs(todayOnly)) {
+      final currentHour = now.hour;
+      final currentMinute = now.minute;
+      final currentTimeInMinutes = currentHour * 60 + currentMinute;
+      final selectedTimeInMinutes = _startTime.hour * 60 + _startTime.minute;
+      
+      if (selectedTimeInMinutes < currentTimeInMinutes) {
+        _showErrorSnackBar(
+          title: 'Time Already Passed',
+          message: 'Cannot book times that have already passed. Current time is ${currentHour.toString().padLeft(2, '0')}:${currentMinute.toString().padLeft(2, '0')}. Please select a later time.',
+        );
+        return;
+      }
     }
 
     // Validate guest count
@@ -385,11 +401,15 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: () async {
+                  // Calculate dates for picker
+                  final today = DateTime.now();
+                  final todayOnly = DateTime(today.year, today.month, today.day);
+                  
                   final picked = await showDatePicker(
                     context: context,
                     initialDate: _selectedDate,
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(const Duration(days: 90)),
+                    firstDate: todayOnly, // Only allow today and future dates
+                    lastDate: todayOnly.add(const Duration(days: 90)),
                   );
                   if (picked != null) {
                     setState(() => _selectedDate = picked);

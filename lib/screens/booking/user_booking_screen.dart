@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import '../../models/room_model.dart';
 import '../../models/booking_model.dart';
 import '../../providers/booking_provider.dart';
@@ -26,19 +27,37 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
   late TextEditingController _customDurationController;
   late TextEditingController _purposeController;
   bool _isBooking = false;
+  late Timer _timeUpdateTimer;
+  DateTime _currentTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _customDurationController = TextEditingController();
     _purposeController = TextEditingController();
+    
+    // Update current time every second
+    _timeUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _currentTime = DateTime.now();
+      });
+    });
   }
 
   @override
   void dispose() {
     _customDurationController.dispose();
     _purposeController.dispose();
+    _timeUpdateTimer.cancel();
     super.dispose();
+  }
+
+  String _timeToString(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _getCurrentTimeString() {
+    return '${_currentTime.hour.toString().padLeft(2, '0')}:${_currentTime.minute.toString().padLeft(2, '0')}';
   }
 
   TimeOfDay _calculateEndTime() {
@@ -47,10 +66,6 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
     final hours = (totalMinutes ~/ 60) % 24;
     final mins = totalMinutes % 60;
     return TimeOfDay(hour: hours, minute: mins);
-  }
-
-  String _timeToString(TimeOfDay time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 
   Future<void> _handleBooking() async {
@@ -385,6 +400,44 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
                           ),
                         ],
                       ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+
+              // Current Time Display
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Colors.blue.shade200,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.schedule, color: Colors.blue.shade700, size: 20),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Current Time',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: Colors.blue.shade700,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        Text(
+                          _getCurrentTimeString(),
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: Colors.blue.shade900,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

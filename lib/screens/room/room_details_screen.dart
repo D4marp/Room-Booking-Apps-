@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import '../../models/room_model.dart';
 import '../../models/booking_model.dart';
 import '../../models/user_model.dart';
@@ -23,6 +24,8 @@ class RoomDetailsScreen extends StatefulWidget {
 
 class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   late Future<List<BookingModel>> _bookingsFuture;
+  late Timer _timeUpdateTimer;
+  DateTime _currentTime = DateTime.now();
   
   @override
   void initState() {
@@ -30,6 +33,15 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     debugPrint('🚀 RoomDetailsScreen initState: Room ID = ${widget.room.id}');
     _bookingsFuture = Future.value([]);
     _loadBookings();
+    
+    // Update current time every second
+    _timeUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentTime = DateTime.now();
+        });
+      }
+    });
   }
   
   Future<void> _loadBookings() async {
@@ -69,6 +81,16 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
              booking.bookingDate.month == today.month &&
              booking.bookingDate.year == today.year;
     }).toList();
+  }
+
+  @override
+  void dispose() {
+    _timeUpdateTimer.cancel();
+    super.dispose();
+  }
+
+  String _getCurrentTimeString() {
+    return '${_currentTime.hour.toString().padLeft(2, '0')}:${_currentTime.minute.toString().padLeft(2, '0')}';
   }
   
   @override
@@ -164,6 +186,43 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
           Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
             child: _buildReservaHeader(),
+          ),
+          // Current Time Display
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Colors.blue.shade200,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.schedule, color: Colors.blue.shade700, size: 20),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Current Time',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: Colors.blue.shade700,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    Text(
+                      _getCurrentTimeString(),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: Colors.blue.shade900,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Expanded(

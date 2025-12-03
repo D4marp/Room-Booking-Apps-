@@ -254,7 +254,24 @@ class RoomService {
 
       for (var booking in existingBookings.docs) {
         final data = booking.data() as Map<String, dynamic>;
-        final existingBookingDate = DateTime.fromMillisecondsSinceEpoch(data['bookingDate']);
+        
+        // Handle bookingDate - could be Timestamp or milliseconds
+        DateTime existingBookingDate;
+        try {
+          final bookingDateValue = data['bookingDate'];
+          if (bookingDateValue is int) {
+            existingBookingDate = DateTime.fromMillisecondsSinceEpoch(bookingDateValue);
+          } else if (bookingDateValue is String) {
+            existingBookingDate = DateTime.parse(bookingDateValue);
+          } else {
+            // Assume it's a Timestamp object from Firestore
+            existingBookingDate = (bookingDateValue as dynamic).toDate();
+          }
+        } catch (e) {
+          debugPrint('⚠️ Warning: Could not parse booking date: ${data['bookingDate']}, skipping this booking');
+          continue;
+        }
+        
         final existingDateOnly = DateTime(existingBookingDate.year, existingBookingDate.month, existingBookingDate.day);
         
         // Only check time conflict if booking is on the same day
@@ -290,11 +307,21 @@ class RoomService {
   }
 
   // Helper method to convert time string (HH:mm) to minutes
-  static int _timeToMinutes(String timeStr) {
+  static int _timeToMinutes(String? timeStr) {
     try {
+      if (timeStr == null || timeStr.isEmpty) {
+        debugPrint('⚠️ Warning: timeStr is null or empty, defaulting to 0');
+        return 0;
+      }
+      
       final parts = timeStr.split(':');
-      final hours = int.parse(parts[0]);
-      final minutes = int.parse(parts[1]);
+      if (parts.length < 2) {
+        debugPrint('⚠️ Warning: Invalid time format: $timeStr');
+        return 0;
+      }
+      
+      final hours = int.tryParse(parts[0]) ?? 0;
+      final minutes = int.tryParse(parts[1]) ?? 0;
       return hours * 60 + minutes;
     } catch (e) {
       debugPrint('❌ Error parsing time $timeStr: $e');

@@ -23,6 +23,11 @@ class BookingService {
     try {
       debugPrint('🔍 Creating booking for room: $roomId');
       
+      // Validate time parameters
+      if (checkInTime.isEmpty || checkOutTime.isEmpty) {
+        throw 'Invalid time format. Check-in and check-out times cannot be empty.';
+      }
+      
       // Check room availability first
       bool isAvailable =
           await RoomService.isRoomAvailable(

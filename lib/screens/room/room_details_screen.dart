@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/room_model.dart';
 import '../../models/booking_model.dart';
+import '../../models/user_model.dart';
 import '../../providers/booking_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_theme.dart';
@@ -72,27 +73,83 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        // Prevent back navigation in kiosk mode
-        if (widget.isKioskMode) {
-          return false;
-        }
-        return true;
-      },
-      child: Scaffold(
-        body: Stack(
-          children: [
-            _buildRoomDetails(),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _buildBookButton(),
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        // Check if user has Bookings role
+        if (authProvider.user == null || authProvider.userModel?.role != UserRole.booking) {
+          return Scaffold(
+            body: Container(
+              color: Colors.white,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.lock_outline,
+                      size: 64,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Access Denied',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryText,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'This page is exclusive to Bookings role',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.secondaryText,
+                          ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Go Back'),
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
-      ),
+          );
+        }
+
+        return WillPopScope(
+          onWillPop: () async {
+            // Prevent back navigation in kiosk mode
+            if (widget.isKioskMode) {
+              return false;
+            }
+            return true;
+          },
+          child: Scaffold(
+            body: Stack(
+              children: [
+                _buildRoomDetails(),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: _buildBookButton(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
   Widget _buildRoomDetails() {

@@ -75,7 +75,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
-        // Check if user has Bookings role
+        // Check if user has Bookings role - ONLY Bookings role allowed
         if (authProvider.user == null || authProvider.userModel?.role != UserRole.booking) {
           return Scaffold(
             body: Container(
@@ -86,39 +86,42 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                   children: [
                     Icon(
                       Icons.lock_outline,
-                      size: 64,
+                      size: 80,
                       color: Colors.grey.shade400,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
                     Text(
                       'Access Denied',
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppColors.primaryText,
+                            fontSize: 28,
                           ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
                     Text(
-                      'This page is exclusive to Bookings role',
+                      'This interface is exclusive for\nBookings role only',
+                      textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: AppColors.secondaryText,
+                            fontSize: 16,
                           ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryRed,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 12,
+                          horizontal: 40,
+                          vertical: 16,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text('Go Back'),
+                      child: const Text('Go Back', style: TextStyle(fontSize: 16)),
                     ),
                   ],
                 ),
@@ -196,7 +199,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
-                  fontSize: 28,
+                  fontSize: 32,
                 ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -206,7 +209,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
             widget.room.roomClass,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: Colors.white.withOpacity(0.85),
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.w500,
                 ),
           ),
@@ -229,38 +232,53 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: widget.room.isAvailable
                   ? Colors.green.withOpacity(0.2)
                   : Colors.red.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: widget.room.isAvailable
                     ? Colors.green.withOpacity(0.7)
                     : Colors.red.withOpacity(0.7),
-                width: 1.5,
+                width: 2,
               ),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  widget.room.isAvailable ? Icons.check_circle : Icons.cancel,
-                  color: widget.room.isAvailable ? Colors.green : Colors.red,
-                  size: 20,
+                Row(
+                  children: [
+                    Icon(
+                      widget.room.isAvailable ? Icons.check_circle : Icons.cancel,
+                      color: widget.room.isAvailable ? Colors.green : Colors.red,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      widget.room.isAvailable ? 'Available Now' : 'Currently Booked',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  widget.room.isAvailable ? 'Available' : 'Booked',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                ),
+                if (widget.room.isAvailable) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    'Available: 08:00 AM - 17:00 PM',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                  ),
+                ],
               ],
             ),
           ),

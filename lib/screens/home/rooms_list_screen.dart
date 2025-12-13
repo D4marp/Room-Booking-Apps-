@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../models/room_model.dart';
 import '../../providers/room_provider.dart';
 import '../../utils/app_theme.dart';
+import '../../core/gen/assets.gen.dart';
 import '../room/room_details_screen.dart';
 
 class RoomsListScreen extends StatefulWidget {
@@ -21,6 +23,11 @@ class _RoomsListScreenState extends State<RoomsListScreen>
   @override
   void initState() {
     super.initState();
+    // Force landscape orientation
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadRooms();
     });
@@ -43,6 +50,13 @@ class _RoomsListScreenState extends State<RoomsListScreen>
 
   @override
   void dispose() {
+    // Reset orientation when leaving
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     if (_rooms.isNotEmpty) {
       _tabController.dispose();
     }
@@ -121,247 +135,382 @@ class _RoomsListScreenState extends State<RoomsListScreen>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Select a Room'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black87,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadRooms,
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Container(
-              color: Colors.white,
-              child: TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                labelColor: AppColors.primaryRed,
-                unselectedLabelColor: AppColors.secondaryText,
-                indicatorColor: AppColors.primaryRed,
-                indicatorWeight: 3,
-                tabAlignment: TabAlignment.start,
-                tabs: _rooms.map((room) {
-                  return Tab(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _getRoomIcon(room.roomClass),
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          room.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
+      body: Stack(
+        children: [
+          // Background Image - Tab Screen
+          Positioned.fill(
+            child: Image(
+              image: Assets.images.tabScreen.provider(),
+              fit: BoxFit.cover,
             ),
           ),
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: _rooms.map((room) {
-          return _buildRoomCard(room);
-        }).toList(),
+          
+          // Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Custom AppBar
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: MediaQuery.of(context).size.width * 0.015,
+                    vertical: MediaQuery.of(context).size.height * 0.02,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.3),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.arrow_back_ios,
+                          color: Colors.white,
+                          size: MediaQuery.of(context).size.width * 0.02,
+                        ),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                      Expanded(
+                        child: Text(
+                          'Select a Room',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: MediaQuery.of(context).size.width * 0.019,
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontWeight: FontWeight.w700,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.refresh,
+                          color: Colors.white,
+                          size: MediaQuery.of(context).size.width * 0.02,
+                        ),
+                        onPressed: _loadRooms,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                SizedBox(height: MediaQuery.of(context).size.height * 0.025),
+                
+                // Tabs
+                Container(
+                  height: MediaQuery.of(context).size.height * 0.09,
+                  margin: EdgeInsets.symmetric(
+                    horizontal: MediaQuery.of(context).size.width * 0.015,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable: true,
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white70,
+                    indicator: BoxDecoration(
+                      color: AppColors.primaryRed,
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    tabAlignment: TabAlignment.start,
+                    tabs: _rooms.map((room) {
+                      return Tab(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: MediaQuery.of(context).size.width * 0.015,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _getRoomIcon(room.roomClass),
+                                size: MediaQuery.of(context).size.width * 0.016,
+                              ),
+                              SizedBox(width: MediaQuery.of(context).size.width * 0.006),
+                              Text(
+                                room.name,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: MediaQuery.of(context).size.width * 0.013,
+                                  fontFamily: 'Plus Jakarta Sans',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                
+                SizedBox(height: MediaQuery.of(context).size.height * 0.025),
+                
+                // Tab Content
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: _rooms.map((room) {
+                      return _buildRoomCard(room);
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildRoomCard(RoomModel room) {
-    return Container(
-      color: Colors.white,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    
+    // Responsive padding and sizing
+    final horizontalPadding = screenWidth * 0.04;
+    final verticalPadding = screenHeight * 0.05;
+    final cardPadding = screenWidth * 0.025;
+    
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding,
+        vertical: verticalPadding,
+      ),
+      child: Row(
         children: [
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.all(AppSpacing.lg),
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: room.isAvailable
-                    ? [const Color(0xFF2E7D32), const Color(0xFF1B5E20)]
-                    : [const Color(0xFFB71C1C), const Color(0xFF8B0000)],
+          // Left side - Room Info
+          Expanded(
+            flex: 3,
+            child: Container(
+              padding: EdgeInsets.all(cardPadding),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: room.isAvailable
+                      ? [const Color(0xFF2E7D32), const Color(0xFF1B5E20)]
+                      : [const Color(0xFFB71C1C), const Color(0xFF8B0000)],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black54,
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Room name
-                Text(
-                  room.name,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 32,
-                      ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
-                // Room class
-                Text(
-                  room.roomClass,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-                // Location
-                Row(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.location_on, color: Colors.white70, size: 20),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '${room.location}, ${room.city}',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Capacity & AC
-                Row(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          const Icon(Icons.people, color: Colors.white70, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Capacity: ${room.maxGuests}',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    // Room Icon & Name
+                    Row(
+                      children: [
+                        Icon(
+                          _getRoomIcon(room.roomClass),
+                          color: Colors.white,
+                          size: screenWidth * 0.04,
+                        ),
+                        SizedBox(width: screenWidth * 0.012),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                room.name,
+                                style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: screenWidth * 0.028,
+                                  fontFamily: 'Plus Jakarta Sans',
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                room.roomClass,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontSize: screenWidth * 0.014,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Plus Jakarta Sans',
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    Expanded(
+                    
+                    SizedBox(height: screenHeight * 0.03),
+                    
+                    // Details Grid
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInfoItem(
+                            Icons.location_on,
+                            '${room.location}, ${room.city}',
+                            screenWidth,
+                          ),
+                        ),
+                        SizedBox(width: screenWidth * 0.012),
+                        Expanded(
+                          child: _buildInfoItem(
+                            Icons.people,
+                            '${room.maxGuests} Guests',
+                            screenWidth,
+                          ),
+                        ),
+                        SizedBox(width: screenWidth * 0.012),
+                        Expanded(
+                          child: _buildInfoItem(
+                            room.hasAC ? Icons.ac_unit : Icons.wind_power,
+                            room.hasAC ? 'AC' : 'Fan',
+                            screenWidth,
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    SizedBox(height: screenHeight * 0.03),
+                    
+                    // Status Badge
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.016,
+                        vertical: screenHeight * 0.02,
+                      ),
+                      decoration: BoxDecoration(
+                        color: room.isAvailable
+                            ? Colors.white.withOpacity(0.2)
+                            : Colors.black.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.5),
+                          width: 2,
+                        ),
+                      ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            room.hasAC ? Icons.ac_unit : Icons.wind_power,
-                            color: Colors.white70,
-                            size: 18,
+                            room.isAvailable ? Icons.check_circle : Icons.cancel,
+                            color: Colors.white,
+                            size: screenWidth * 0.02,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            room.hasAC ? 'AC' : 'Fan',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                ),
+                          SizedBox(width: screenWidth * 0.01),
+                          Flexible(
+                            child: Text(
+                              room.isAvailable ? 'Available Now' : 'Currently Booked',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: screenWidth * 0.014,
+                                fontFamily: 'Plus Jakarta Sans',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.xl),
-                // Status badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: room.isAvailable
-                        ? Colors.green.withOpacity(0.2)
-                        : Colors.red.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: room.isAvailable
-                          ? Colors.green.withOpacity(0.7)
-                          : Colors.red.withOpacity(0.7),
-                      width: 1.5,
+              ),
+            ),
+          ),
+          
+          SizedBox(width: screenWidth * 0.025),
+          
+          // Right side - Action Button
+          Expanded(
+            flex: 2,
+            child: Center(
+              child: Container(
+                width: double.infinity,
+                constraints: BoxConstraints(maxWidth: screenWidth * 0.3),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RoomDetailsScreen(
+                          room: room,
+                          isKioskMode: true,
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryRed,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: screenHeight * 0.05),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
+                    elevation: 8,
+                    shadowColor: Colors.black.withOpacity(0.3),
                   ),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        room.isAvailable ? Icons.check_circle : Icons.cancel,
-                        color: room.isAvailable ? Colors.green : Colors.red,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
                       Text(
-                        room.isAvailable ? 'Available' : 'Booked',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                        'Enter Booking',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.019,
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
+                      SizedBox(width: screenWidth * 0.01),
+                      Icon(Icons.arrow_forward, size: screenWidth * 0.022),
                     ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-          const SizedBox(height: AppSpacing.xl),
-          // Enter Booking button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RoomDetailsScreen(
-                        room: room,
-                        isKioskMode: true,
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.arrow_forward, size: 18),
-                label: const Text('Enter Booking'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryRed,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 2,
-                ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(IconData icon, String text, double screenWidth) {
+    return Container(
+      padding: EdgeInsets.all(screenWidth * 0.01),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white, size: screenWidth * 0.016),
+          SizedBox(width: screenWidth * 0.006),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: screenWidth * 0.011,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'Plus Jakarta Sans',
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

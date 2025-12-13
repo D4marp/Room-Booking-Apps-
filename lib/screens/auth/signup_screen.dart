@@ -115,22 +115,21 @@ class _SignUpScreenState extends State<SignUpScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Background Image
-        Positioned.fill(
-          child: Image(
-            image: Assets.images.homeBg.provider(),
-            fit: BoxFit.cover,
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Background Image
+          Positioned.fill(
+            child: Image(
+              image: Assets.images.homeBg.provider(),
+              fit: BoxFit.cover,
+            ),
           ),
-        ),
-        
-        // Content
-        Scaffold(
-          backgroundColor: Colors.transparent,
-          body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+          
+          // Content
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: SafeArea(
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: SlideTransition(
@@ -617,8 +616,8 @@ class _SignUpScreenState extends State<SignUpScreen>
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

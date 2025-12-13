@@ -62,6 +62,9 @@ class $AssetsIconGen {
   /// File path: assets/icon/Notif.svg
   SvgGenImage get notif => const SvgGenImage('assets/icon/Notif.svg');
 
+  /// File path: assets/icon/add_book.svg
+  SvgGenImage get addBook => const SvgGenImage('assets/icon/add_book.svg');
+
   /// File path: assets/icon/cinema_room.svg
   SvgGenImage get cinemaRoom =>
       const SvgGenImage('assets/icon/cinema_room.svg');
@@ -90,6 +93,7 @@ class $AssetsIconGen {
         bookings,
         home,
         notif,
+        addBook,
         cinemaRoom,
         conference,
         guests,

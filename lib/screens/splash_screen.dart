@@ -130,6 +130,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+          
                   const Spacer(flex: 2),
 
                   // Main Logo - Full Image
@@ -138,13 +139,12 @@ class _SplashScreenState extends State<SplashScreen>
                     child: FadeTransition(
                       opacity: _fadeAnimation,
                       child: Image(
-                        image: Assets.logo.splash.provider(),
-              
+                        image: Assets.logo.splash.provider()                        
                       ),
                     ),
                   ),
 
-                  const Spacer(flex: 3),
+                  const Spacer(flex: 2),
 
                   // Footer with "by" and logo
                   FadeTransition(
@@ -177,7 +177,7 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                             child: Image(
                               image: Assets.logo.mekansm.provider(),
-                              height: 35,
+                              height: 20,
                               fit: BoxFit.contain,
                             ),
                           ),

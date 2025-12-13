@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:email_validator/email_validator.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_theme.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_text_field.dart';
 import '../../core/gen/assets.gen.dart';
 import '../home/home_screen.dart';
 import 'signup_screen.dart';

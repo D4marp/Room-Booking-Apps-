@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../models/user_model.dart';
 import '../../models/room_model.dart';
 import '../../providers/auth_provider.dart';
@@ -23,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final _searchController = TextEditingController();
   late TabController _tabController;
   int _selectedIndex = 0;
+  String _userLocation = 'Loading...';
+  bool _locationLoading = true;
 
   @override
   void initState() {
@@ -33,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final roomProvider = Provider.of<RoomProvider>(context, listen: false);
       roomProvider.loadRooms();
+      _getCurrentLocation();
     });
   }
 
@@ -43,13 +48,66 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // Sample data is now added via admin panel after login
-  // See README_SETUP.md for instructions on how to add sample data
-
   void _onBottomNavTap(int index) {
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      // Check permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied ||
+            permission == LocationPermission.deniedForever) {
+          if (mounted) {
+            setState(() {
+              _userLocation = 'Permission denied';
+              _locationLoading = false;
+            });
+          }
+          return;
+        }
+      }
+
+      // Get current position
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Get address from coordinates
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty && mounted) {
+        final place = placemarks.first;
+        final city = place.locality ?? place.administrativeArea ?? 'Unknown';
+        final country = place.country ?? 'Indonesia';
+
+        setState(() {
+          _userLocation = '$city, $country';
+          _locationLoading = false;
+        });
+
+        // Optionally update user location in Firestore
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        if (authProvider.userModel != null) {
+          authProvider.updateUserLocation(city);
+        }
+      }
+    } catch (e) {
+      print('Error getting location: $e');
+      if (mounted) {
+        setState(() {
+          _userLocation = 'Unable to get location';
+          _locationLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -148,9 +206,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               const SizedBox(height: 6),
                               Consumer<AuthProvider>(
                                 builder: (context, authProvider, child) {
-                                  final userLocation =
-                                      authProvider.userModel?.city ??
-                                          'Surabaya';
+                                  final displayLocation = _locationLoading
+                                      ? 'Getting location...'
+                                      : _userLocation;
                                   return Row(
                                     children: [
                                       Assets.icon.location.svg(
@@ -162,13 +220,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        '$userLocation, Indonesia',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 15,
-                                          fontFamily: 'Plus Jakarta Sans',
-                                          fontWeight: FontWeight.w600,
+                                      Expanded(
+                                        child: Text(
+                                          displayLocation,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 15,
+                                            fontFamily: 'Plus Jakarta Sans',
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
                                     ],

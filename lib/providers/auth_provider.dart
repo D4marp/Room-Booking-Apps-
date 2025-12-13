@@ -224,6 +224,20 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Update user location
+  Future<void> updateUserLocation(String city) async {
+    if (_user == null || _userModel == null) return;
+
+    try {
+      final updatedUser = _userModel!.copyWith(city: city);
+      await AuthService.updateUserDocument(updatedUser);
+      _userModel = updatedUser;
+      notifyListeners();
+    } catch (e) {
+      print('Error updating location: $e');
+    }
+  }
+
   // Helper methods
   void _setLoading(bool loading) {
     _isLoading = loading;

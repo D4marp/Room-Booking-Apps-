@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/room_model.dart';
 import '../../providers/room_provider.dart';
 import '../../utils/app_theme.dart';
-import '../room/room_details_screen.dart';
+import '../booking/user_booking_screen.dart';
 
 class RoomsListScreen extends StatefulWidget {
   const RoomsListScreen({super.key});
@@ -343,9 +343,8 @@ class _RoomsListScreenState extends State<RoomsListScreen>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => RoomDetailsScreen(
+                      builder: (context) => UserBookingScreen(
                         room: room,
-                        isKioskMode: true,
                       ),
                     ),
                   );

@@ -18,16 +18,17 @@ dependencies:
   # State Management
   provider: ^6.1.2
   
-  # Firebase (Storage removed - using free image URLs)
+  # Firebase
   firebase_core: ^2.32.0
   firebase_auth: ^4.20.0
   cloud_firestore: ^4.17.5
-  # firebase_storage: ^11.7.6  # Commented out - using free images instead
+  firebase_storage: ^11.7.6
   # google_sign_in: ^6.2.1  # Temporarily removed - causing iOS dependency conflicts
   
   # UI Components & Animation
   # carousel_slider: ^4.2.1  # Temporarily removed due to conflicts
   cached_network_image: ^3.3.1
+  image_picker: ^1.0.4
   
   # Date & Time
   intl: ^0.19.0

@@ -5,6 +5,7 @@ class UserModel {
   final String name;
   final String email;
   final String? profileImage;
+  final String? city;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final UserRole role;
@@ -14,6 +15,7 @@ class UserModel {
     required this.name,
     required this.email,
     this.profileImage,
+    this.city,
     required this.createdAt,
     this.updatedAt,
     this.role = UserRole.user,
@@ -25,6 +27,7 @@ class UserModel {
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       profileImage: json['profileImage'],
+      city: json['city'],
       createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
       updatedAt: json['updatedAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'])
@@ -43,6 +46,7 @@ class UserModel {
       'name': name,
       'email': email,
       'profileImage': profileImage,
+      'city': city,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt?.millisecondsSinceEpoch,
       'role': role == UserRole.admin ? 'admin' : role == UserRole.booking ? 'booking' : 'user',

@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '12.0'
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -47,20 +47,60 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
-    # Fix GoogleUtilities dependency conflict
-    if target.name == 'Pods-Runner'
-      target.build_configurations.each do |config|
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
-          '$(inherited)',
-          'FIREBASE_ANALYTICS_COLLECTION_ENABLED=1',
-        ]
+    # Fix deployment target for all pods
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'FIREBASE_ANALYTICS_COLLECTION_ENABLED=1',
+      ]
+      
+      # Fix for simulator build issue - remove unsupported flags
+      config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+      
+      # Fix for gRPC-Core and gRPC-C++ simulator build
+      if target.name == 'gRPC-Core' || target.name == 'gRPC-C++'
+        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'GPR_FORBID_UNREACHABLE_CODE=1'
       end
+      
+      # Remove -G flag from all compiler flags
+      ['OTHER_CFLAGS', 'OTHER_CPLUSPLUSFLAGS', 'OTHER_LDFLAGS'].each do |flag|
+        if config.build_settings[flag].is_a?(Array)
+          config.build_settings[flag] = config.build_settings[flag].reject { |f| f == '-G' }
+        elsif config.build_settings[flag].is_a?(String)
+          config.build_settings[flag] = config.build_settings[flag].gsub('-G', '')
+        end
+      end
+      
+      # Ensure proper architecture settings
+      config.build_settings['VALID_ARCHS'] = 'arm64 x86_64'
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'i386'
     end
   end
   
-  # Workaround for CocoaPods dependency issue
+  # Ensure consistent deployment target across all pods
   installer.pods_project.build_configurations.each do |config|
     config.build_settings.delete('CODE_SIGNING_ALLOWED')
     config.build_settings.delete('CODE_SIGNING_REQUIRED')
+    config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+  end
+  
+  # Fix deployment target for all targets
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+      
+      # Remove problematic flags
+      ['OTHER_CFLAGS', 'OTHER_CPLUSPLUSFLAGS', 'OTHER_LDFLAGS'].each do |flag|
+        if config.build_settings[flag].is_a?(Array)
+          config.build_settings[flag] = config.build_settings[flag].reject { |f| f == '-G' }
+        elsif config.build_settings[flag].is_a?(String)
+          config.build_settings[flag] = config.build_settings[flag].gsub('-G', '')
+        end
+      end
+    end
   end
 end

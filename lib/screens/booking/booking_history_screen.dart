@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:bookify_rooms/core/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -16,20 +18,35 @@ class BookingHistoryScreen extends StatefulWidget {
 class _BookingHistoryScreenState extends State<BookingHistoryScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  Timer? _autoRefreshTimer;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
 
-    // Load bookings when screen initializes
+    // Start listening to real-time booking updates (Stream-based)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final bookingProvider =
-          Provider.of<BookingProvider>(context, listen: false);
+      _loadBookings();
+      _startAutoRefresh();
+    });
+  }
 
-      if (authProvider.user != null) {
-        bookingProvider.loadUserBookings(authProvider.user!.uid);
+  void _loadBookings() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final bookingProvider =
+        Provider.of<BookingProvider>(context, listen: false);
+
+    if (authProvider.user != null) {
+      bookingProvider.loadUserBookings(authProvider.user!.uid);
+    }
+  }
+
+  void _startAutoRefresh() {
+    // Auto-refresh setiap 30 detik
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        _loadBookings();
       }
     });
   }
@@ -37,37 +54,78 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _autoRefreshTimer?.cancel();
     super.dispose();
+  }
+
+  Widget _buildCustomTab(String label, int index) {
+    final isSelected = _tabController.index == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _tabController.animateTo(index);
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: ShapeDecoration(
+          color: isSelected ? const Color(0xFFEC0303) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black,
+            fontSize: 16,
+            fontFamily: 'Plus Jakarta Sans',
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Bookings'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'All'),
-            Tab(text: 'Upcoming'),
-            Tab(text: 'Past'),
-          ],
-          labelColor: AppColors.primaryRed,
-          unselectedLabelColor: AppColors.secondaryText,
-          indicatorColor: AppColors.primaryRed,
+    return Stack(
+      children: [
+        // Full background image
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/My Bookings.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
-      ),
-      body: Consumer<BookingProvider>(
-        builder: (context, bookingProvider, child) {
-          if (bookingProvider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(
-                valueColor:
-                    AlwaysStoppedAnimation<Color>(AppColors.primaryRed),
+        // Content
+        Scaffold(
+          backgroundColor: Colors.transparent,
+            appBar: AppBar(
+            title: const Center(
+              child: Text(
+              'My Bookings',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontFamily: 'Plus Jakarta Sans',
+                fontWeight: FontWeight.w700,
               ),
-            );
+              ),
+            ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: false,
+          ),
+          body: Consumer<BookingProvider>(
+        builder: (context, bookingProvider, child) {
+          if (bookingProvider.isLoading && bookingProvider.userBookings.isEmpty) {
+            return _buildShimmerLoading();
           }
 
           if (bookingProvider.errorMessage != null) {
@@ -100,16 +158,55 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
             );
           }
 
-          return TabBarView(
-            controller: _tabController,
+          return Column(
             children: [
-              _buildBookingsList(bookingProvider.userBookings, 'all'),
-              _buildBookingsList(bookingProvider.upcomingBookings, 'upcoming'),
-              _buildBookingsList(bookingProvider.pastBookings, 'past'),
+              // Custom Tab Bar
+                // Custom Tab Bar with filter icon at right
+                Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20, top: 16),
+                  child: Row(
+                    children: [
+                      // Tabs at the left
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Transform.scale(scale: 0.85, child: _buildCustomTab('All', 0)),
+                          Transform.scale(scale: 0.85, child: _buildCustomTab('Upcoming', 1)),
+                          Transform.scale(scale: 0.85, child: _buildCustomTab('Past', 2)),
+                        ],
+                      ),
+                      const Spacer(),
+                      // Filter icon at the right corner
+                      GestureDetector(
+                        onTap: () {
+                          // Handle filter tap if needed
+                        },
+                        child: SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: Assets.images.filter.svg(width: 36, height: 36),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Tab Content
+                Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                  _buildBookingsList(bookingProvider.userBookings, 'all'),
+                  _buildBookingsList(bookingProvider.upcomingBookings, 'upcoming'),
+                  _buildBookingsList(bookingProvider.pastBookings, 'past'),
+                  ],
+                ),
+              ),
             ],
           );
         },
       ),
+        ),
+      ],
     );
   }
 
@@ -265,6 +362,176 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
       ),
     );
   }
+
+  Widget _buildShimmerLoading() {
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        children: [
+          // Custom tabs shimmer
+          Padding(
+            padding: const EdgeInsets.only(left: 20, right: 20, top: 16, bottom: 16),
+            child: Row(
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(
+                    3,
+                    (index) => Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: _ShimmerBox(
+                        width: 80,
+                        height: 36,
+                        borderRadius: 6,
+                      ),
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                _ShimmerBox(width: 36, height: 36, borderRadius: 8),
+              ],
+            ),
+          ),
+          // Booking cards shimmer
+          Expanded(
+            child: ListView.builder(
+              itemCount: 5,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: _buildShimmerBookingCard(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerBookingCard() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image shimmer
+          _ShimmerBox(
+            width: 100,
+            height: 90,
+            borderRadius: 8,
+          ),
+          const SizedBox(width: 12),
+          // Content shimmer
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ShimmerBox(width: double.infinity, height: 18, borderRadius: 4),
+                const SizedBox(height: 8),
+                _ShimmerBox(width: 150, height: 14, borderRadius: 4),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _ShimmerBox(width: 16, height: 16, borderRadius: 4),
+                    const SizedBox(width: 4),
+                    _ShimmerBox(width: 100, height: 13, borderRadius: 4),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    _ShimmerBox(width: 16, height: 16, borderRadius: 4),
+                    const SizedBox(width: 4),
+                    _ShimmerBox(width: 120, height: 13, borderRadius: 4),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ShimmerBox extends StatefulWidget {
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  const _ShimmerBox({
+    required this.width,
+    required this.height,
+    this.borderRadius = 0,
+  });
+
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+
+    _animation = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(widget.borderRadius),
+            gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: const [
+                Color(0xFFE0E0E0),
+                Color(0xFFF5F5F5),
+                Color(0xFFE0E0E0),
+              ],
+              stops: [
+                _animation.value - 0.3,
+                _animation.value,
+                _animation.value + 0.3,
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 class _BookingDetailsSheet extends StatelessWidget {
@@ -348,8 +615,12 @@ class _BookingDetailsSheet extends StatelessWidget {
                     _buildDetailRow(
                         'Date', _formatDate(booking.bookingDate)),
                     _buildDetailRow(
-                        'Time', '${booking.checkInTime} - ${booking.checkOutTime}'),
-                    _buildDetailRow('Guests', '${booking.numberOfGuests}'),
+                        'Start Time', booking.checkInTime),
+                    _buildDetailRow(
+                        'End Time', booking.checkOutTime),
+                    _buildDetailRow(
+                        'Duration', _calculateDuration(booking.checkInTime, booking.checkOutTime)),
+                    _buildDetailRow('Number of Guests', '${booking.numberOfGuests} ${booking.numberOfGuests == 1 ? "person" : "people"}'),
                     if (booking.purpose != null && booking.purpose!.isNotEmpty)
                       _buildDetailRow('Purpose', booking.purpose!),
 
@@ -396,5 +667,40 @@ class _BookingDetailsSheet extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  String _calculateDuration(String startTime, String endTime) {
+    try {
+      final start = TimeOfDay(
+        hour: int.parse(startTime.split(':')[0]),
+        minute: int.parse(startTime.split(':')[1]),
+      );
+      final end = TimeOfDay(
+        hour: int.parse(endTime.split(':')[0]),
+        minute: int.parse(endTime.split(':')[1]),
+      );
+      
+      int startMinutes = start.hour * 60 + start.minute;
+      int endMinutes = end.hour * 60 + end.minute;
+      
+      // Handle case where end time is next day
+      if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60;
+      }
+      
+      int durationMinutes = endMinutes - startMinutes;
+      int hours = durationMinutes ~/ 60;
+      int minutes = durationMinutes % 60;
+      
+      if (hours > 0 && minutes > 0) {
+        return '$hours hour${hours > 1 ? "s" : ""} $minutes min${minutes > 1 ? "s" : ""}';
+      } else if (hours > 0) {
+        return '$hours hour${hours > 1 ? "s" : ""}';
+      } else {
+        return '$minutes minute${minutes > 1 ? "s" : ""}';
+      }
+    } catch (e) {
+      return 'N/A';
+    }
   }
 }

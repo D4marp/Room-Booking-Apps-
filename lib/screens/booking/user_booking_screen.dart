@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import '../../models/room_model.dart';
-import '../../models/booking_model.dart';
 import '../../providers/booking_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../utils/app_theme.dart';
+import '../../core/gen/assets.gen.dart';
 
 class UserBookingScreen extends StatefulWidget {
   final RoomModel room;
@@ -27,37 +28,23 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
   late TextEditingController _customDurationController;
   late TextEditingController _purposeController;
   bool _isBooking = false;
-  late Timer _timeUpdateTimer;
-  DateTime _currentTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _customDurationController = TextEditingController();
     _purposeController = TextEditingController();
-    
-    // Update current time every second
-    _timeUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      setState(() {
-        _currentTime = DateTime.now();
-      });
-    });
   }
 
   @override
   void dispose() {
     _customDurationController.dispose();
     _purposeController.dispose();
-    _timeUpdateTimer.cancel();
     super.dispose();
   }
 
   String _timeToString(TimeOfDay time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
-
-  String _getCurrentTimeString() {
-    return '${_currentTime.hour.toString().padLeft(2, '0')}:${_currentTime.minute.toString().padLeft(2, '0')}';
   }
 
   TimeOfDay _calculateEndTime() {
@@ -300,42 +287,6 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
     );
   }
 
-  Widget _durationButton(int minutes, String label) {
-    final isCustom = _customDurationController.text.isNotEmpty;
-    final isSelected = (!isCustom && _durationMinutes == minutes) ||
-        (isCustom && int.tryParse(_customDurationController.text) == minutes);
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _durationMinutes = minutes;
-            _customDurationController.clear();
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryRed : Colors.white,
-            border: Border.all(
-              color: AppColors.primaryRed,
-              width: 2,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: isSelected ? Colors.white : AppColors.primaryRed,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final endTime = _calculateEndTime();
@@ -344,376 +295,364 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
         : _durationMinutes;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Book ${widget.room.name}'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: Colors.black87,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          color: Colors.white,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Room Info Card
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryRedLight.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.primaryRed.withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.meeting_room_outlined,
-                      size: 40,
-                      color: AppColors.primaryRed,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.room.name,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryText,
-                                ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${widget.room.maxGuests} guests • ${widget.room.hasAC ? 'AC' : 'Fan'}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.secondaryText,
-                                ),
-                          ),
-                        ],
+      body: Stack(
+        children: [
+          // Background with gradient circles
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: const Color(0xFF170F0F),
+            child: Stack(
+              children: [
+                // Top right gradient circle
+                Positioned(
+                  left: MediaQuery.of(context).size.width * 0.4,
+                  top: -191,
+                  child: Container(
+                    width: 504,
+                    height: 504,
+                    decoration: const ShapeDecoration(
+                      gradient: RadialGradient(
+                        center: Alignment(0.50, 0.50),
+                        radius: 0.52,
+                        colors: [Color(0xFF690011), Color(0xFF34000B)],
+                      ),
+                      shape: OvalBorder(
+                        side: BorderSide(width: 2, color: Color(0xFFEC0303)),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-
-              // Current Time Display
-              Container(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Colors.blue.shade200,
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.schedule, color: Colors.blue.shade700, size: 20),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Current Time',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        Text(
-                          _getCurrentTimeString(),
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: Colors.blue.shade900,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppSpacing.xl),
-
-              // Date Selection
-              Text(
-                'Select Date',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () async {
-                  // Calculate dates for picker
-                  final today = DateTime.now();
-                  final todayOnly = DateTime(today.year, today.month, today.day);
-                  
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate,
-                    firstDate: todayOnly, // Only allow today and future dates
-                    lastDate: todayOnly.add(const Duration(days: 90)),
-                  );
-                  if (picked != null) {
-                    setState(() => _selectedDate = picked);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.borderColor),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_today, size: 18),
-                      const SizedBox(width: 12),
-                      Text(
-                        '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                        style: Theme.of(context).textTheme.bodyMedium,
+                // Top left gradient circle
+                Positioned(
+                  left: -78,
+                  top: -426,
+                  child: Container(
+                    width: 504,
+                    height: 504,
+                    decoration: const ShapeDecoration(
+                      gradient: RadialGradient(
+                        center: Alignment(0.16, 0.82),
+                        radius: 0.65,
+                        colors: [Color(0xFF34000B), Color(0xFFAF0406)],
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Start Time Selection
-              Text(
-                'Start Time',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () async {
-                  final picked = await showTimePicker(
-                    context: context,
-                    initialTime: _startTime,
-                  );
-                  if (picked != null) {
-                    setState(() => _startTime = picked);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
-                  ),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.borderColor),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.access_time, size: 18),
-                      const SizedBox(width: 12),
-                      Text(
-                        _timeToString(_startTime),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                      shape: OvalBorder(
+                        side: BorderSide(width: 2, color: Color(0xFFEC0303)),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Duration Selection
-              Text(
-                'Duration',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
                     ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _durationButton(30, '30 min'),
-                  const SizedBox(width: 8),
-                  _durationButton(60, '60 min'),
-                  const SizedBox(width: 8),
-                  _durationButton(90, '90 min'),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Custom Duration
-              Text(
-                'Custom Duration (minutes)',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.secondaryText,
-                    ),
-              ),
-              const SizedBox(height: 4),
-              TextField(
-                controller: _customDurationController,
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  setState(() {});
-                },
-                decoration: InputDecoration(
-                  hintText: 'Enter custom duration',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-
-              // Time Summary
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryRedLight.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: AppColors.primaryRedLight.withOpacity(0.3),
-                  ),
-                ),
+              ],
+            ),
+          ),
+          // Content
+          SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Booking Summary',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                    // AppBar Custom
+                    Padding(
+                      padding: const EdgeInsets.only(top: 20, bottom: 20),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 24),
+                            onPressed: () => Navigator.pop(context),
                           ),
+                          const Expanded(
+                            child: Text(
+                              'Booking Details',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 32,
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 48), // Balance the back button
+                        ],
+                      ),
+                    ),
+
+                    // Main Room Image
+                    Container(
+                      width: double.infinity,
+                      height: 200,
+                      decoration: ShapeDecoration(
+                        image: widget.room.imageUrls.isNotEmpty
+                            ? DecorationImage(
+                                image: CachedNetworkImageProvider(widget.room.imageUrls.first),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: widget.room.imageUrls.isEmpty
+                          ? const Center(
+                              child: Icon(Icons.meeting_room, size: 80, color: Colors.white54),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Amenities Chips
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildAmenityChip(
+                            icon: Assets.icon.guests.svg(width: 20, height: 20),
+                            label: '${widget.room.maxGuests} Guests',
+                          ),
+                          const SizedBox(width: 8),
+                          if (widget.room.hasAC)
+                            _buildAmenityChip(
+                              icon: const Icon(Icons.ac_unit, size: 20, color: Colors.black),
+                              label: 'AC',
+                            ),
+                          const SizedBox(width: 8),
+                          if (widget.room.amenities.any((a) => a.toLowerCase().contains('projector')))
+                            _buildAmenityChip(
+                              icon: const Icon(Icons.present_to_all, size: 20, color: Colors.black),
+                              label: 'Projector',
+                            ),
+                          const SizedBox(width: 8),
+                          if (widget.room.amenities.any((a) => a.toLowerCase().contains('panel') || a.toLowerCase().contains('interactive')))
+                            _buildAmenityChip(
+                              icon: const Icon(Icons.touch_app, size: 20, color: Colors.black),
+                              label: 'Interactive Panel',
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Room Name
+                    Text(
+                      widget.room.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Time Slot:',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        Text(
-                          '${_timeToString(_startTime)} - ${_timeToString(endTime)}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primaryRed,
-                              ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Duration:',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        Text(
-                          '$displayDuration minutes',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
 
-              // Guest Count
-              Text(
-                'Guests',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    // Location
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, color: Color(0xFFBBBBBB), size: 18),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${widget.room.city}, ${widget.room.location}',
+                          style: const TextStyle(
+                            color: Color(0xFFBBBBBB),
+                            fontSize: 14,
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 16),
+
+                    // Room Details Heading
+                    const Text(
+                      'Room Details',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Room Images Gallery (3 images)
+                    Row(
+                      children: [
+                        Expanded(child: _buildGalleryImage(0)),
+                        const SizedBox(width: 10),
+                        Expanded(child: _buildGalleryImage(1)),
+                        const SizedBox(width: 10),
+                        Expanded(child: _buildGalleryImage(2)),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Select Date Heading
+                    const Text(
+                      'Select Date',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Calendar Widget
+                    _buildCalendarWidget(),
+                    const SizedBox(height: 24),
+
+                    // Select Time Heading
+                    const Text(
+                      'Select Time',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontFamily: 'Plus Jakarta Sans',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Time Display Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () async {
+                              final time = await showTimePicker(
+                                context: context,
+                                initialTime: _startTime,
+                              );
+                              if (time != null) {
+                                setState(() => _startTime = time);
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: ShapeDecoration(
+                                shape: RoundedRectangleBorder(
+                                  side: const BorderSide(width: 1.5, color: Color(0xFFBBBBBB)),
+                                  borderRadius: BorderRadius.circular(11),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.access_time, color: Colors.white, size: 24),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${_timeToString(_startTime)} - ${_timeToString(endTime)}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontFamily: 'Plus Jakarta Sans',
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          decoration: ShapeDecoration(
+                            shape: RoundedRectangleBorder(
+                              side: const BorderSide(width: 1.5, color: Color(0xFFBBBBBB)),
+                              borderRadius: BorderRadius.circular(11),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.timer_outlined, color: Colors.white, size: 24),
+                              const SizedBox(width: 8),
+                              Text(
+                                '$displayDuration minutes',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontFamily: 'Plus Jakarta Sans',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+              // Purpose (optional)
+              const Text(
+                'Purpose (optional)',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 12),
               Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.borderColor),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed: _guestCount > 1
-                          ? () => setState(() => _guestCount--)
-                          : null,
-                    ),
-                    Text(
-                      _guestCount.toString(),
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: _guestCount < widget.room.maxGuests
-                          ? () => setState(() => _guestCount++)
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Purpose (optional)
-              Text(
-                'Purpose (optional)',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _purposeController,
-                decoration: InputDecoration(
-                  hintText: 'e.g., Meeting, Training, Class',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md,
-                    vertical: AppSpacing.sm,
+                height: 122,
+                padding: const EdgeInsets.all(16),
+                decoration: ShapeDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  shape: RoundedRectangleBorder(
+                    side: const BorderSide(width: 1.5, color: Color(0xFFBBBBBB)),
+                    borderRadius: BorderRadius.circular(11),
                   ),
                 ),
-                maxLines: 2,
+                child: TextField(
+                  controller: _purposeController,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontFamily: 'Plus Jakarta Sans',
+                    fontWeight: FontWeight.w600,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. Meeting, Training, Class ...',
+                    hintStyle: TextStyle(
+                      color: Color(0xFFBBBBBB),
+                      fontSize: 16,
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontWeight: FontWeight.w600,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  maxLines: 4,
+                  minLines: 4,
+                  textAlignVertical: TextAlignVertical.top,
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 30),
 
               // Book Button
-              SizedBox(
+              Container(
                 width: double.infinity,
+                height: 56,
+                decoration: ShapeDecoration(
+                  color: widget.room.isAvailable && !_isBooking
+                      ? const Color(0xFFEC0303)
+                      : Colors.grey,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                ),
                 child: ElevatedButton(
                   onPressed: widget.room.isAvailable && !_isBooking
                       ? _handleBooking
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryRed,
-                    disabledBackgroundColor: AppColors.borderColor,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(11),
                     ),
                   ),
                   child: _isBooking
@@ -726,19 +665,224 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
                             strokeWidth: 2,
                           ),
                         )
-                      : Text(
-                          'Confirm Booking',
-                          style:
-                              Theme.of(context).textTheme.labelLarge?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                      : const Text(
+                          'Book now',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                 ),
               ),
-            ],
+              const SizedBox(height: 30),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to build amenity chips
+  Widget _buildAmenityChip({required Widget icon, required String label}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: ShapeDecoration(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(75),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          icon,
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 14,
+              fontFamily: 'Plus Jakarta Sans',
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to build gallery images
+  Widget _buildGalleryImage(int index) {
+    if (widget.room.imageUrls.length > index) {
+      return Container(
+        height: 106,
+        decoration: ShapeDecoration(
+          image: DecorationImage(
+            image: CachedNetworkImageProvider(widget.room.imageUrls[index]),
+            fit: BoxFit.cover,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
           ),
         ),
+      );
+    }
+    return Container(
+      height: 106,
+      decoration: ShapeDecoration(
+        color: const Color(0xFF939393).withOpacity(0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+      child: const Center(
+        child: Icon(Icons.image, color: Color(0xFFBBBBBB), size: 40),
+      ),
+    );
+  }
+
+  // Helper method to build inline calendar widget
+  Widget _buildCalendarWidget() {
+    final now = DateTime.now();
+    final displayMonth = DateTime(_selectedDate.year, _selectedDate.month);
+    final firstDayOfMonth = DateTime(displayMonth.year, displayMonth.month, 1);
+    final lastDayOfMonth = DateTime(displayMonth.year, displayMonth.month + 1, 0);
+    final firstWeekday = firstDayOfMonth.weekday;
+    final daysInMonth = lastDayOfMonth.day;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: ShapeDecoration(
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(width: 1.5, color: Color(0xFFBBBBBB)),
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Month Header with navigation
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                DateFormat('MMMM yyyy').format(displayMonth),
+                style: const TextStyle(
+                  color: Color(0xFF0F0F0F),
+                  fontSize: 22,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left, size: 26),
+                    onPressed: () {
+                      setState(() {
+                        _selectedDate = DateTime(_selectedDate.year, _selectedDate.month - 1, 1);
+                      });
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right, size: 26),
+                    onPressed: () {
+                      setState(() {
+                        _selectedDate = DateTime(_selectedDate.year, _selectedDate.month + 1, 1);
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Day labels
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+                .map((day) => SizedBox(
+                      width: 40,
+                      child: Text(
+                        day,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFF0F0F0F),
+                          fontSize: 19,
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+          const Divider(color: Color(0xFFE5E5E5), height: 20),
+
+          // Calendar grid
+          ...List.generate(6, (weekIndex) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: List.generate(7, (dayIndex) {
+                  final dayNumber = weekIndex * 7 + dayIndex - firstWeekday + 2;
+                  final isCurrentMonth = dayNumber > 0 && dayNumber <= daysInMonth;
+                  final date = isCurrentMonth
+                      ? DateTime(displayMonth.year, displayMonth.month, dayNumber)
+                      : null;
+                  final isSelected = date != null &&
+                      date.year == _selectedDate.year &&
+                      date.month == _selectedDate.month &&
+                      date.day == _selectedDate.day;
+                  final isPast = date != null && date.isBefore(DateTime(now.year, now.month, now.day));
+
+                  return GestureDetector(
+                    onTap: isCurrentMonth && !isPast
+                        ? () {
+                            setState(() {
+                              _selectedDate = date!;
+                            });
+                          }
+                        : null,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: isSelected
+                          ? const ShapeDecoration(
+                              color: Color(0xFFEC0303),
+                              shape: OvalBorder(),
+                            )
+                          : null,
+                      child: Center(
+                        child: Text(
+                          isCurrentMonth ? dayNumber.toString() : '',
+                          style: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : isPast
+                                    ? const Color(0xFF939393)
+                                    : isCurrentMonth
+                                        ? const Color(0xFF0F0F0F)
+                                        : const Color(0xFF939393),
+                            fontSize: 19,
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }

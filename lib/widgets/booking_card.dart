@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/booking_model.dart';
-import '../utils/app_theme.dart';
+import '../core/gen/assets.gen.dart';
 
 class BookingCard extends StatelessWidget {
   final BookingModel booking;
@@ -18,299 +19,304 @@ class BookingCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        decoration: AppDecorations.cardDecoration,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [ 
-            // Header with booking ID and status
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: _getStatusColor().withOpacity(0.1),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Booking #${booking.id.substring(0, 8).toUpperCase()}',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primaryText,
-                                  ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Booked on ${DateFormat('dd MMM yyyy').format(booking.createdAt)}',
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.secondaryText,
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: AppSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      booking.statusDisplayName,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 10,
-                          ),
-                    ),
-                  ),
-                ],
-              ),
+        decoration: ShapeDecoration(
+          color: const Color(0xBF170F0F),
+          shape: RoundedRectangleBorder(
+            side: const BorderSide(
+              width: 1.5,
+              color: Color(0xFFAF0406),
             ),
-            // Room details
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Room name and location
-                  if (booking.roomName != null) ...[
-                    Text(
-                      booking.roomName!,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryText,
-                          ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppSpacing.xs),
-                  ],
-                  if (booking.roomLocation != null) ...[
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on,
-                          size: 16,
-                          color: AppColors.secondaryText,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            booking.roomLocation!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: AppColors.secondaryText,
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Room Image
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: booking.roomImageUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: booking.roomImageUrl!,
+                          width: 100,
+                          height: 90,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            width: 100,
+                            height: 90,
+                            color: Colors.grey[800],
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFFEC0303),
                                 ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            width: 100,
+                            height: 90,
+                            color: Colors.grey[800],
+                            child: const Icon(
+                              Icons.image_not_supported,
+                              color: Colors.white54,
+                              size: 30,
+                            ),
+                          ),
+                        )
+                      : Container(
+                          width: 100,
+                          height: 90,
+                          color: Colors.grey[800],
+                          child: const Icon(
+                            Icons.meeting_room,
+                            color: Colors.white54,
+                            size: 35,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                  ],
-                  // Booked by (user name)
-                  if (booking.userName != null && booking.userName!.isNotEmpty) ...[
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.person,
-                          size: 16,
-                          color: AppColors.primaryRed,
-                        ),
-                        const SizedBox(width: 6),
+                ),
+                const SizedBox(width: 12),
+                // Room Details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Room name
+                      if (booking.roomName != null)
                         Text(
-                          'Booked by: ${booking.userName}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.primaryRed,
-                            fontWeight: FontWeight.w600,
+                          booking.roomName!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontFamily: 'Plus Jakarta Sans',
+                            fontWeight: FontWeight.w700,
                           ),
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                  ],
-                  // Booking date
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today,
-                        size: 16,
-                        color: AppColors.secondaryText,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        DateFormat('dd MMM yyyy').format(booking.bookingDate),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.primaryText,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),  // Booking details row
-                  Row(
-                    children: [
-                      _buildInfoChip(
-                        '${booking.numberOfGuests} ${booking.numberOfGuests == 1 ? 'guest' : 'guests'}',
-                        Icons.people,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                    // Booking status and time range
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 8),
+                      // Location
+                      if (booking.roomLocation != null)
+                        Row(
                           children: [
-                            Text(
-                              'Time Range',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: AppColors.secondaryText,
-                                  ),
+                            Assets.icon.location.svg(
+                              width: 18,
+                              height: 18,
+                              colorFilter: const ColorFilter.mode(
+                                Color(0xFFBBBBBB),
+                                BlendMode.srcIn,
+                              ),
                             ),
-                            Text(
-                              booking.formattedTimeRange,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(
-                                    color: AppColors.primaryRed,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                booking.roomLocation!,
+                                style: const TextStyle(
+                                  color: Color(0xFFBBBBBB),
+                                  fontSize: 14,
+                                  fontFamily: 'Plus Jakarta Sans',
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                      const SizedBox(height: 8),
+                      // Date
+                      Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: AppSpacing.xs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor().withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: _getStatusColor(),
-                                width: 1,
-                              ),
-                            ),
+                          const Icon(
+                            Icons.calendar_today,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
                             child: Text(
-                              booking.statusDisplayName,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: _getStatusColor(),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 10,
-                                  ),
+                              _formatDate(booking.bookingDate),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontWeight: FontWeight.w600,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-
-                          // Cancel button
-                          if (onCancel != null) ...[
-                            const SizedBox(height: AppSpacing.sm),
-                            TextButton(
-                              onPressed: onCancel,
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.errorRed,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.sm,
-                                  vertical: AppSpacing.xs,
-                                ),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      // Time
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.access_time,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              '${booking.checkInTime} - ${booking.checkOutTime}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontFamily: 'Plus Jakarta Sans',
+                                fontWeight: FontWeight.w600,
                               ),
-                              child: Text(
-                                'Cancel',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: AppColors.errorRed,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      // Number of Guests
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.people,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${booking.numberOfGuests} ${booking.numberOfGuests == 1 ? "Guest" : "Guests"}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontFamily: 'Plus Jakarta Sans',
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                       ),
                     ],
                   ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Divider
+            Container(
+              width: double.infinity,
+              height: 1,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 12),
+            // Booking ID
+            Text(
+              'Booking ID #${booking.id.substring(0, 8).toUpperCase()}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontFamily: 'Plus Jakarta Sans',
+                fontWeight: FontWeight.w700,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+            // Booked by
+            if (booking.userName != null && booking.userName!.isNotEmpty)
+              Text(
+                'Booked by: ${booking.userName} on ${_formatDate(booking.createdAt)}',
+                style: const TextStyle(
+                  color: Color(0xFFBBBBBB),
+                  fontSize: 12,
+                  fontFamily: 'Plus Jakarta Sans',
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            const SizedBox(height: 16),
+            // Status and Cancel Button
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 5,
+                  ),
+                  decoration: ShapeDecoration(
+                    color: _getStatusColor(),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(23),
+                    ),
+                  ),
+                  child: Text(
+                    booking.statusDisplayName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontFamily: 'Plus Jakarta Sans',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (onCancel != null) ...[
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: onCancel,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 5,
+                      ),
+                      decoration: ShapeDecoration(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(23),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel booking',
+                        style: TextStyle(
+                          color: Color(0xFFEC0303),
+                          fontSize: 14,
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
       ),
-    );
-  }
-  Widget _buildInfoChip(String text, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.xs,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primaryRed.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 14,
-            color: AppColors.primaryRed,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: const TextStyle(
-              color: AppColors.primaryRed,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
       ),
     );
   }
+
+  String _formatDate(DateTime date) {
+    // Check if date is epoch (1 Jan 1970) which indicates null/missing data
+    if (date.year == 1970) {
+      return 'Date not set';
+    }
+    return DateFormat('d MMM yyyy').format(date);
+  }
+
   Color _getStatusColor() {
     switch (booking.status) {
-      case BookingStatus.pending:
-        return AppColors.warningYellow;
       case BookingStatus.confirmed:
-        return AppColors.successGreen;
-      case BookingStatus.cancelled:
-        return AppColors.errorRed;
+        return const Color(0xFF04B04C); // Green
       case BookingStatus.completed:
-        return AppColors.primaryRed;
+        return const Color(0xFFEC0303); // Red
+      case BookingStatus.cancelled:
+        return const Color(0xFF939393); // Gray
+      case BookingStatus.pending:
+        return const Color(0xFFFF9800); // Orange
     }
   }
 }

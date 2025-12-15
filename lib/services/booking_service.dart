@@ -344,17 +344,35 @@ class BookingService {
   static Future<List<BookingModel>> getBookingsByRoomId(String roomId) async {
     try {
       debugPrint('🔍 Fetching bookings for room: $roomId');
+      
+      // Simple query without orderBy to avoid Firestore index issues
       QuerySnapshot snapshot = await _firestore
           .collection(_collection)
           .where('roomId', isEqualTo: roomId)
-          .orderBy('checkInDate', descending: false)
           .get();
 
       debugPrint('📊 Found ${snapshot.docs.length} bookings in Firestore for room $roomId');
+      
       final bookings = snapshot.docs
-          .map((doc) => BookingModel.fromJson(
-              {...doc.data() as Map<String, dynamic>, 'id': doc.id}))
+          .map((doc) {
+            try {
+              return BookingModel.fromJson(
+                  {...doc.data() as Map<String, dynamic>, 'id': doc.id});
+            } catch (e) {
+              debugPrint('⚠️ Error parsing booking doc ${doc.id}: $e');
+              return null;
+            }
+          })
+          .whereType<BookingModel>()
           .toList();
+      
+      // Sort by bookingDate on client-side to avoid Firestore index requirement
+      bookings.sort((a, b) => a.bookingDate.compareTo(b.bookingDate));
+      
+      debugPrint('✅ Successfully parsed and sorted ${bookings.length} bookings');
+      for (var booking in bookings) {
+        debugPrint('   - ${booking.checkInTime}-${booking.checkOutTime} (${booking.bookingDate})');
+      }
       
       return bookings;
     } catch (e) {

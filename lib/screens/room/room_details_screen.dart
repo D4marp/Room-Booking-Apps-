@@ -64,6 +64,13 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
       final filteredBookings = _filterBookingsForToday(bookings);
       debugPrint('📅 Filtered to ${filteredBookings.length} bookings for today');
       
+      if (filteredBookings.isNotEmpty) {
+        debugPrint('📋 Today\'s bookings:');
+        for (var booking in filteredBookings) {
+          debugPrint('   - ${booking.checkInTime}-${booking.checkOutTime} | Status: ${booking.status.name}');
+        }
+      }
+      
       if (mounted) {
         setState(() {
           _bookingsFuture = Future.value(filteredBookings);
@@ -613,29 +620,16 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                 bottom: 0,
                 child: GestureDetector(
                   onTap: _showBookingDialog,
-                  child: Container(
-                    width: screenWidth * 0.057,
-                    height: screenWidth * 0.057,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.25),
-                          blurRadius: 5,
-                          spreadRadius: 4.5,
+                  child: Stack(
+                    children: [
+                      Center(
+                        child: Assets.icon.addBook.svg(
+                          width: screenWidth * 0.057,
+                          height: screenWidth * 0.057,
+                         
                         ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        Center(
-                          child: Assets.icon.addBook.svg(
-                          
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -774,30 +768,16 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
               bottom: 0,
               child: GestureDetector(
                 onTap: _showBookingDialog,
-                child: Container(
-                  width: screenWidth * 0.057,
-                  height: screenWidth * 0.057,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.25),
-                        blurRadius: 5,
-                        spreadRadius: 4.5,
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Assets.icon.addBook.svg(
-                      width: screenWidth * 0.029,
-                      height: screenWidth * 0.029,
-                      colorFilter: const ColorFilter.mode(
-                        Color(0xFFEC0303),
-                        BlendMode.srcIn,
+                child: Stack(
+                  children: [
+                    Center(
+                      child: Assets.icon.addBook.svg(
+                        width: screenWidth * 0.057,
+                        height: screenWidth * 0.057,
+                       
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -827,15 +807,22 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => _BookingFormWidget(room: widget.room),
+      builder: (context) => _BookingFormWidget(
+        room: widget.room,
+        onBookingSuccess: _loadBookings,
+      ),
     );
   }
 }
 
 class _BookingFormWidget extends StatefulWidget {
   final RoomModel room;
+  final VoidCallback? onBookingSuccess;
 
-  const _BookingFormWidget({required this.room});
+  const _BookingFormWidget({
+    required this.room,
+    this.onBookingSuccess,
+  });
 
   @override
   State<_BookingFormWidget> createState() => _BookingFormWidgetState();
@@ -964,6 +951,9 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
           title: 'Booking Confirmed!',
           message: '${widget.room.name}\n${_timeToString(_startTime)} - ${_timeToString(endTime)}\n$_guestCount guest${_guestCount > 1 ? 's' : ''}',
         );
+        
+        // Call callback to refresh parent widget
+        widget.onBookingSuccess?.call();
         
         // Pop after brief delay to show success message
         Future.delayed(const Duration(milliseconds: 500), () {

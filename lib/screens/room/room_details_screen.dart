@@ -67,8 +67,10 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
       if (filteredBookings.isNotEmpty) {
         debugPrint('📋 Today\'s bookings:');
         for (var booking in filteredBookings) {
-          debugPrint('   - ${booking.checkInTime}-${booking.checkOutTime} | Status: ${booking.status.name}');
+          debugPrint('   - ${booking.checkInTime}-${booking.checkOutTime} | User: ${booking.userName} | Status: ${booking.status.name}');
         }
+      } else {
+        debugPrint('📋 No bookings found for today');
       }
       
       if (mounted) {
@@ -89,13 +91,24 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
 
   List<BookingModel> _filterBookingsForToday(List<BookingModel> bookings) {
     final today = DateTime.now();
+    final todayOnly = DateTime(today.year, today.month, today.day);
     
-    return bookings.where((booking) {
-      // Check if booking's bookingDate is today
-      return booking.bookingDate.day == today.day && 
-             booking.bookingDate.month == today.month &&
-             booking.bookingDate.year == today.year;
+    debugPrint('🔎 Filtering bookings for TODAY: ${todayOnly.toString().split(' ')[0]}');
+    debugPrint('📊 Total bookings to filter: ${bookings.length}');
+    
+    final filtered = bookings.where((booking) {
+      final bookingDateOnly = DateTime(booking.bookingDate.year, booking.bookingDate.month, booking.bookingDate.day);
+      final isToday = bookingDateOnly.isAtSameMomentAs(todayOnly);
+      
+      if (isToday) {
+        debugPrint('✅ MATCH - ${booking.userName ?? "Unknown"}: ${booking.checkInTime}-${booking.checkOutTime}');
+      }
+      
+      return isToday;
     }).toList();
+    
+    debugPrint('📅 Filtered result: ${filtered.length} bookings for today');
+    return filtered;
   }
 
   @override
@@ -952,10 +965,14 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
           message: '${widget.room.name}\n${_timeToString(_startTime)} - ${_timeToString(endTime)}\n$_guestCount guest${_guestCount > 1 ? 's' : ''}',
         );
         
-        // Call callback to refresh parent widget
+        // Wait for Firestore to sync, then refresh parent widget
+        // Adding delay to ensure data is written to Firestore
+        await Future.delayed(const Duration(milliseconds: 1500));
+        
+        debugPrint('🔄 Refreshing parent widget after booking...');
         widget.onBookingSuccess?.call();
         
-        // Pop after brief delay to show success message
+        // Pop after success message is shown
         Future.delayed(const Duration(milliseconds: 500), () {
           if (mounted) {
             Navigator.pop(context);

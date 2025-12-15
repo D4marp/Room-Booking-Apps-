@@ -343,15 +343,15 @@ class BookingService {
   // Get all bookings for a specific room
   static Future<List<BookingModel>> getBookingsByRoomId(String roomId) async {
     try {
-      debugPrint('🔍 Fetching bookings for room: $roomId');
+      debugPrint('🔍 Fetching ALL bookings for room: $roomId (from all users)');
       
-      // Simple query without orderBy to avoid Firestore index issues
+      // Get ALL bookings for this room (from all users, all dates)
       QuerySnapshot snapshot = await _firestore
           .collection(_collection)
           .where('roomId', isEqualTo: roomId)
           .get();
 
-      debugPrint('📊 Found ${snapshot.docs.length} bookings in Firestore for room $roomId');
+      debugPrint('📊 Found ${snapshot.docs.length} total bookings in Firestore for room $roomId');
       
       final bookings = snapshot.docs
           .map((doc) {
@@ -369,9 +369,10 @@ class BookingService {
       // Sort by bookingDate on client-side to avoid Firestore index requirement
       bookings.sort((a, b) => a.bookingDate.compareTo(b.bookingDate));
       
-      debugPrint('✅ Successfully parsed and sorted ${bookings.length} bookings');
+      debugPrint('✅ Successfully parsed and sorted ${bookings.length} bookings from all users');
+      debugPrint('📋 Bookings detail:');
       for (var booking in bookings) {
-        debugPrint('   - ${booking.checkInTime}-${booking.checkOutTime} (${booking.bookingDate})');
+        debugPrint('   - User: ${booking.userName ?? "Unknown"} | Time: ${booking.checkInTime}-${booking.checkOutTime} | Date: ${booking.bookingDate.toString().split(' ')[0]} | Status: ${booking.status.name}');
       }
       
       return bookings;

@@ -144,8 +144,10 @@ class _UserBookingScreenState extends State<UserBookingScreen> {
           message: '${widget.room.name}\n${_timeToString(_startTime)} - ${_timeToString(endTime)}\n$_guestCount guest${_guestCount > 1 ? 's' : ''}',
         );
         
-        // Pop after brief delay to show success message
-        Future.delayed(const Duration(milliseconds: 500), () {
+        debugPrint('🔥 Booking saved! Stream will auto-update all screens...');
+        
+        // Close screen after showing success message
+        Future.delayed(const Duration(milliseconds: 800), () {
           if (mounted) {
             Navigator.pop(context);
           }

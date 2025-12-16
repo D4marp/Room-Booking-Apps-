@@ -25,7 +25,6 @@ class RoomDetailsScreen extends StatefulWidget {
 }
 
 class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
-  late Future<List<BookingModel>> _bookingsFuture;
   late Timer _timeUpdateTimer;
   DateTime _currentTime = DateTime.now();
   
@@ -39,8 +38,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     ]);
     
     debugPrint('🚀 RoomDetailsScreen initState: Room ID = ${widget.room.id}');
-    _bookingsFuture = Future.value([]);
-    _loadBookings();
+    debugPrint('🔥 Using REAL-TIME stream - auto-sync enabled!');
     
     // Update current time every second
     _timeUpdateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -50,43 +48,6 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         });
       }
     });
-  }
-  
-  Future<void> _loadBookings() async {
-    debugPrint('📥 _loadBookings called for room: ${widget.room.id}');
-    final bookingProvider = context.read<BookingProvider>();
-    try {
-      debugPrint('⏳ Fetching bookings...');
-      final bookings = await bookingProvider.getBookingsByRoomId(widget.room.id);
-      debugPrint('✅ Got ${bookings.length} bookings from provider');
-      
-      // Filter untuk hari ini saja
-      final filteredBookings = _filterBookingsForToday(bookings);
-      debugPrint('📅 Filtered to ${filteredBookings.length} bookings for today');
-      
-      if (filteredBookings.isNotEmpty) {
-        debugPrint('📋 Today\'s bookings:');
-        for (var booking in filteredBookings) {
-          debugPrint('   - ${booking.checkInTime}-${booking.checkOutTime} | User: ${booking.userName} | Status: ${booking.status.name}');
-        }
-      } else {
-        debugPrint('📋 No bookings found for today');
-      }
-      
-      if (mounted) {
-        setState(() {
-          _bookingsFuture = Future.value(filteredBookings);
-          debugPrint('✨ setState called with ${filteredBookings.length} bookings for today');
-        });
-      }
-    } catch (e) {
-      debugPrint('❌ Error in _loadBookings: $e');
-      if (mounted) {
-        setState(() {
-          _bookingsFuture = Future.error(e);
-        });
-      }
-    }
   }
 
   List<BookingModel> _filterBookingsForToday(List<BookingModel> bookings) {
@@ -582,14 +543,16 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     
-    debugPrint('🔨 _buildScheduleList called');
-    return FutureBuilder<List<BookingModel>>(
-      future: _bookingsFuture,
+    debugPrint('🔨 _buildScheduleList called with REAL-TIME stream');
+    final bookingProvider = context.watch<BookingProvider>();
+    
+    return StreamBuilder<List<BookingModel>>(
+      stream: bookingProvider.getBookingsByRoomIdStream(widget.room.id),
       builder: (context, snapshot) {
-        debugPrint('📊 FutureBuilder state: connectionState=${snapshot.connectionState}, hasData=${snapshot.hasData}, hasError=${snapshot.hasError}');
+        debugPrint('📊 StreamBuilder state: connectionState=${snapshot.connectionState}, hasData=${snapshot.hasData}, hasError=${snapshot.hasError}');
         
         if (snapshot.connectionState == ConnectionState.waiting) {
-          debugPrint('⏳ Still waiting for data...');
+          debugPrint('⏳ Waiting for initial stream data...');
           return const Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -598,7 +561,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         }
         
         if (snapshot.hasError) {
-          debugPrint('❌ FutureBuilder error: ${snapshot.error}');
+          debugPrint('❌ StreamBuilder error: ${snapshot.error}');
           
           return Center(
             child: Text(
@@ -611,8 +574,12 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
           );
         }
         
-        final bookings = snapshot.data ?? [];
-        debugPrint('📅 RoomDetailsScreen: Loaded ${bookings.length} bookings for room ${widget.room.id}');
+        final allBookings = snapshot.data ?? [];
+        debugPrint('📡 Real-time data: ${allBookings.length} total bookings received');
+        
+        // Filter untuk hari ini saja
+        final bookings = _filterBookingsForToday(allBookings);
+        debugPrint('📅 Filtered to ${bookings.length} bookings for TODAY');
         
         if (bookings.isEmpty) {
           return Stack(
@@ -822,7 +789,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
       ),
       builder: (context) => _BookingFormWidget(
         room: widget.room,
-        onBookingSuccess: _loadBookings,
+        // No callback needed - Stream auto-updates!
       ),
     );
   }
@@ -830,11 +797,9 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
 
 class _BookingFormWidget extends StatefulWidget {
   final RoomModel room;
-  final VoidCallback? onBookingSuccess;
 
   const _BookingFormWidget({
     required this.room,
-    this.onBookingSuccess,
   });
 
   @override
@@ -965,15 +930,10 @@ class _BookingFormWidgetState extends State<_BookingFormWidget> {
           message: '${widget.room.name}\n${_timeToString(_startTime)} - ${_timeToString(endTime)}\n$_guestCount guest${_guestCount > 1 ? 's' : ''}',
         );
         
-        // Wait for Firestore to sync, then refresh parent widget
-        // Adding delay to ensure data is written to Firestore
-        await Future.delayed(const Duration(milliseconds: 1500));
+        debugPrint('🔥 Booking saved! Stream will auto-update all devices...');
         
-        debugPrint('🔄 Refreshing parent widget after booking...');
-        widget.onBookingSuccess?.call();
-        
-        // Pop after success message is shown
-        Future.delayed(const Duration(milliseconds: 500), () {
+        // Close dialog after showing success message
+        Future.delayed(const Duration(milliseconds: 800), () {
           if (mounted) {
             Navigator.pop(context);
           }

@@ -18,7 +18,6 @@ class BookingHistoryScreen extends StatefulWidget {
 class _BookingHistoryScreenState extends State<BookingHistoryScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  Timer? _autoRefreshTimer;
 
   @override
   void initState() {
@@ -26,9 +25,9 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
     _tabController = TabController(length: 3, vsync: this);
 
     // Start listening to real-time booking updates (Stream-based)
+    // No timer needed - Stream auto-updates in real-time! 🔥
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadBookings();
-      _startAutoRefresh();
     });
   }
 
@@ -38,23 +37,14 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen>
         Provider.of<BookingProvider>(context, listen: false);
 
     if (authProvider.user != null) {
+      debugPrint('🔥 Loading user bookings with real-time stream for user: ${authProvider.user!.uid}');
       bookingProvider.loadUserBookings(authProvider.user!.uid);
     }
-  }
-
-  void _startAutoRefresh() {
-    // Auto-refresh setiap 30 detik
-    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      if (mounted) {
-        _loadBookings();
-      }
-    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _autoRefreshTimer?.cancel();
     super.dispose();
   }
 

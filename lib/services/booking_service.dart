@@ -340,7 +340,7 @@ class BookingService {
     }
   }
 
-  // Get all bookings for a specific room
+  // Get all bookings for a specific room (LEGACY - ONE-TIME FETCH)
   static Future<List<BookingModel>> getBookingsByRoomId(String roomId) async {
     try {
       debugPrint('🔍 Fetching ALL bookings for room: $roomId (from all users)');
@@ -389,5 +389,45 @@ class BookingService {
       debugPrint('❌ Error fetching bookings for room $roomId: $e');
       throw 'Error fetching bookings for room: $e';
     }
+  }
+
+  // 🔥 REAL-TIME STREAM: Get all bookings for a specific room with automatic updates
+  // This enables instant sync across all devices (HP, Tab, Admin)
+  static Stream<List<BookingModel>> getBookingsByRoomIdStream(String roomId) {
+    debugPrint('🔥 Setting up REAL-TIME stream for room: $roomId');
+    
+    return _firestore
+        .collection(_collection)
+        .where('roomId', isEqualTo: roomId)
+        .snapshots()
+        .map((snapshot) {
+      debugPrint('📡 Real-time update received: ${snapshot.docs.length} bookings for room $roomId');
+      
+      final bookings = snapshot.docs
+          .map((doc) {
+            try {
+              return BookingModel.fromJson(
+                  {...doc.data(), 'id': doc.id});
+            } catch (e) {
+              debugPrint('⚠️ Error parsing booking doc ${doc.id}: $e');
+              return null;
+            }
+          })
+          .whereType<BookingModel>()
+          .toList();
+      
+      // Sort by bookingDate on client-side
+      bookings.sort((a, b) => a.bookingDate.compareTo(b.bookingDate));
+      
+      debugPrint('✅ Stream emitted ${bookings.length} bookings');
+      if (bookings.isNotEmpty) {
+        debugPrint('📋 Real-time bookings:');
+        for (var booking in bookings) {
+          debugPrint('   - User: ${booking.userName ?? "Unknown"} | ${booking.checkInTime}-${booking.checkOutTime} | ${booking.bookingDate.toString().split(' ')[0]}');
+        }
+      }
+      
+      return bookings;
+    });
   }
 }

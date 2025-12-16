@@ -164,6 +164,12 @@ class BookingProvider extends ChangeNotifier {
     }
   }
 
+  // 🔥 REAL-TIME STREAM: Get bookings with automatic updates
+  Stream<List<BookingModel>> getBookingsByRoomIdStream(String roomId) {
+    debugPrint('🔥 Provider: Setting up real-time stream for room $roomId');
+    return BookingService.getBookingsByRoomIdStream(roomId);
+  }
+
   // Refresh bookings
   Future<void> refreshBookings(String userId) async {
     loadUserBookings(userId);

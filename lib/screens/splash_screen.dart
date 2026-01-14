@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import '../providers/auth_provider_v2.dart';
 import '../core/gen/assets.gen.dart';
 import 'auth/login_screen.dart';
-import 'home/home_screen.dart';
+import 'main_navigation_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -70,7 +70,7 @@ class _SplashScreenState extends State<SplashScreen>
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
                 authProvider.isAuthenticated
-                    ? const HomeScreen()
+                    ? const MainNavigationScreen()
                     : const LoginScreen(),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {

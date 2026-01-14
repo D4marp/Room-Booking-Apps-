@@ -46,8 +46,10 @@ class ApiService {
       ).timeout(ApiConfig.connectionTimeout);
 
       return _handleResponse(response);
-    catch (e) {
+    } catch (e) {
       throw _handleError(e);
+    }
+  }
     }
   }
 

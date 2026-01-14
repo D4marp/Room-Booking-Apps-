@@ -11,4 +11,5 @@ require (
 	firebase.google.com/go/v4 v4.14.0
 	github.com/Microsoft/go-winrm v0.0.0-20210302180032-9f149a62e27d
 	github.com/tidwall/gjson v1.17.0
+	github.com/google/uuid v1.6.0
 )

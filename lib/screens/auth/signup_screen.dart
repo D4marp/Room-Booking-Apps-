@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:email_validator/email_validator.dart';
-import '../../providers/auth_provider.dart';
+import '../../providers/auth_provider_v2.dart';
 import '../../core/gen/assets.gen.dart';
-import '../home/home_screen.dart';
+import '../main_navigation_screen.dart';
 import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -90,19 +90,9 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
 
     if (success && mounted) {
-      // Set the user role after signup
-      try {
-        await authProvider.setUserRole(_selectedRole);
-      } catch (e) {
-        print('Error setting role: $e');
-      }
-
-      // Navigate to home after role is set
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      }
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
+      );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

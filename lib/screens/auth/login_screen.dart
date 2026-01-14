@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:email_validator/email_validator.dart';
-import '../../providers/auth_provider.dart';
+import '../../providers/auth_provider_v2.dart';
 import '../../utils/app_theme.dart';
 import '../../core/gen/assets.gen.dart';
-import '../home/home_screen.dart';
+import '../main_navigation_screen.dart';
 import 'signup_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     if (success && mounted) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const MainNavigationScreen()),
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

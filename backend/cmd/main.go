@@ -30,27 +30,54 @@ func main() {
 	// Initialize services
 	ctx := context.Background()
 
-	// Firebase service
-	firebaseService, err := services.NewFirebaseService(ctx, cfg)
-	if err != nil {
-		log.Fatalf("Failed to initialize Firebase service: %v", err)
+	// Firebase service (optional - for testing can use mock)
+	var firebaseService *services.FirebaseService
+	if cfg.FirebaseProjectID != "" {
+		var err error
+		firebaseService, err = services.NewFirebaseService(ctx, cfg)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize Firebase service: %v (using mock data)", err)
+		} else {
+			defer firebaseService.Close()
+		}
+	} else {
+		log.Println("Firebase not configured - using mock data for testing")
 	}
-	defer firebaseService.Close()
 
-	// Google Calendar service
-	googleCalendarService, err := services.NewGoogleCalendarService(ctx, cfg)
-	if err != nil {
-		log.Fatalf("Failed to initialize Google Calendar service: %v", err)
+	// Google Calendar service (optional)
+	var googleCalendarService *services.GoogleCalendarService
+	if cfg.GoogleCalendarCredentials != "" {
+		var err error
+		googleCalendarService, err = services.NewGoogleCalendarService(ctx, cfg)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize Google Calendar service: %v", err)
+		}
 	}
 
-	// Microsoft Calendar service
-	microsoftCalendarService, err := services.NewMicrosoftCalendarService(ctx, cfg)
-	if err != nil {
-		log.Fatalf("Failed to initialize Microsoft Calendar service: %v", err)
+	// Microsoft Calendar service (optional)
+	var microsoftCalendarService *services.MicrosoftCalendarService
+	if cfg.MicrosoftClientID != "" {
+		var err error
+		microsoftCalendarService, err = services.NewMicrosoftCalendarService(ctx, cfg)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize Microsoft Calendar service: %v", err)
+		}
 	}
 
 	// Initialize Gin router
 	router := gin.Default()
+
+	// Add CORS middleware
+	router.Use(func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
 
 	// Setup routes
 	setupRoutes(router, firebaseService, googleCalendarService, microsoftCalendarService)

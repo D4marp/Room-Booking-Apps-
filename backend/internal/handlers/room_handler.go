@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/D4marp/bookify-rooms-backend/internal/services"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type RoomHandler struct {
@@ -12,11 +14,71 @@ type RoomHandler struct {
 }
 
 type RoomRequest struct {
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description"`
-	Capacity    int    `json:"capacity" binding:"required"`
-	Location    string `json:"location"`
+	Name        string   `json:"name" binding:"required"`
+	Description string   `json:"description"`
+	Capacity    int      `json:"capacity" binding:"required"`
+	Location    string   `json:"location"`
 	Amenities   []string `json:"amenities"`
+}
+
+type RoomResponse struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Capacity    int       `json:"capacity"`
+	Location    string    `json:"location"`
+	Amenities   []string  `json:"amenities"`
+	Availability bool     `json:"availability"`
+	ImageUrl    string    `json:"imageUrl"`
+	CreatedAt   string    `json:"createdAt"`
+}
+
+// Mock data for testing
+var mockRooms = []RoomResponse{
+	{
+		ID:          "room_001",
+		Name:        "Conference Room A",
+		Description: "Large conference room with projector",
+		Capacity:    20,
+		Location:    "Building A, Floor 2",
+		Amenities:   []string{"Projector", "Whiteboard", "Video Conference"},
+		Availability: true,
+		ImageUrl:    "https://via.placeholder.com/400x300?text=Conference+Room+A",
+		CreatedAt:   time.Now().Format(time.RFC3339),
+	},
+	{
+		ID:          "room_002",
+		Name:        "Meeting Room B",
+		Description: "Small meeting room for 1-on-1s",
+		Capacity:    4,
+		Location:    "Building A, Floor 1",
+		Amenities:   []string{"Whiteboard", "WiFi"},
+		Availability: true,
+		ImageUrl:    "https://via.placeholder.com/400x300?text=Meeting+Room+B",
+		CreatedAt:   time.Now().Format(time.RFC3339),
+	},
+	{
+		ID:          "room_003",
+		Name:        "Training Room C",
+		Description: "Training facility with desks for 15 participants",
+		Capacity:    15,
+		Location:    "Building B, Floor 3",
+		Amenities:   []string{"Projector", "Computers", "WiFi", "AC"},
+		Availability: true,
+		ImageUrl:    "https://via.placeholder.com/400x300?text=Training+Room+C",
+		CreatedAt:   time.Now().Format(time.RFC3339),
+	},
+	{
+		ID:          "room_004",
+		Name:        "Seminar Hall",
+		Description: "Large seminar hall for presentations",
+		Capacity:    50,
+		Location:    "Building B, Floor 2",
+		Amenities:   []string{"Projector", "Sound System", "WiFi", "AC"},
+		Availability: false,
+		ImageUrl:    "https://via.placeholder.com/400x300?text=Seminar+Hall",
+		CreatedAt:   time.Now().Format(time.RFC3339),
+	},
 }
 
 func NewRoomHandler(fs *services.FirebaseService) *RoomHandler {
@@ -26,14 +88,29 @@ func NewRoomHandler(fs *services.FirebaseService) *RoomHandler {
 }
 
 func (rh *RoomHandler) GetRooms(c *gin.Context) {
-	// TODO: Get rooms from Firestore
-	c.JSON(http.StatusOK, gin.H{"message": "Get rooms endpoint"})
+	// Return mock data for testing
+	c.JSON(http.StatusOK, gin.H{
+		"data":    mockRooms,
+		"total":   len(mockRooms),
+		"message": "Rooms retrieved successfully",
+	})
 }
 
 func (rh *RoomHandler) GetRoomByID(c *gin.Context) {
 	roomID := c.Param("id")
-	// TODO: Get specific room from Firestore
-	c.JSON(http.StatusOK, gin.H{"message": "Get room endpoint", "room_id": roomID})
+	
+	// Find room in mock data
+	for _, room := range mockRooms {
+		if room.ID == roomID {
+			c.JSON(http.StatusOK, gin.H{
+				"data":    room,
+				"message": "Room retrieved successfully",
+			})
+			return
+		}
+	}
+	
+	c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
 }
 
 func (rh *RoomHandler) CreateRoom(c *gin.Context) {
@@ -43,8 +120,25 @@ func (rh *RoomHandler) CreateRoom(c *gin.Context) {
 		return
 	}
 
-	// TODO: Create room in Firestore
-	c.JSON(http.StatusCreated, gin.H{"message": "Room created"})
+	newRoom := RoomResponse{
+		ID:            "room_" + uuid.New().String()[:8],
+		Name:          req.Name,
+		Description:   req.Description,
+		Capacity:      req.Capacity,
+		Location:      req.Location,
+		Amenities:     req.Amenities,
+		Availability:  true,
+		ImageUrl:      "https://via.placeholder.com/400x300?text=" + req.Name,
+		CreatedAt:     time.Now().Format(time.RFC3339),
+	}
+
+	// Add to mock data
+	mockRooms = append(mockRooms, newRoom)
+
+	c.JSON(http.StatusCreated, gin.H{
+		"data":    newRoom,
+		"message": "Room created successfully",
+	})
 }
 
 func (rh *RoomHandler) UpdateRoom(c *gin.Context) {
@@ -55,13 +149,44 @@ func (rh *RoomHandler) UpdateRoom(c *gin.Context) {
 		return
 	}
 
-	// TODO: Update room in Firestore
-	c.JSON(http.StatusOK, gin.H{"message": "Room updated", "room_id": roomID})
+	// Find and update room in mock data
+	for i, room := range mockRooms {
+		if room.ID == roomID {
+			mockRooms[i] = RoomResponse{
+				ID:           roomID,
+				Name:         req.Name,
+				Description:  req.Description,
+				Capacity:     req.Capacity,
+				Location:     req.Location,
+				Amenities:    req.Amenities,
+				Availability: room.Availability,
+				ImageUrl:     room.ImageUrl,
+				CreatedAt:    room.CreatedAt,
+			}
+			c.JSON(http.StatusOK, gin.H{
+				"data":    mockRooms[i],
+				"message": "Room updated successfully",
+			})
+			return
+		}
+	}
+
+	c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
 }
 
 func (rh *RoomHandler) DeleteRoom(c *gin.Context) {
 	roomID := c.Param("id")
 	
-	// TODO: Delete room from Firestore
-	c.JSON(http.StatusOK, gin.H{"message": "Room deleted", "room_id": roomID})
+	// Find and remove room from mock data
+	for i, room := range mockRooms {
+		if room.ID == roomID {
+			mockRooms = append(mockRooms[:i], mockRooms[i+1:]...)
+			c.JSON(http.StatusOK, gin.H{
+				"message": "Room deleted successfully",
+			})
+			return
+		}
+	}
+	
+	c.JSON(http.StatusNotFound, gin.H{"error": "Room not found"})
 }

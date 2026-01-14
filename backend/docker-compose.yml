@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - ENV=development
+      - FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID}
+      - FIREBASE_PRIVATE_KEY_ID=${FIREBASE_PRIVATE_KEY_ID}
+      - FIREBASE_PRIVATE_KEY=${FIREBASE_PRIVATE_KEY}
+      - FIREBASE_CLIENT_EMAIL=${FIREBASE_CLIENT_EMAIL}
+      - FIREBASE_CLIENT_ID=${FIREBASE_CLIENT_ID}
+      - GOOGLE_CALENDAR_CREDENTIALS=${GOOGLE_CALENDAR_CREDENTIALS}
+      - GOOGLE_CALENDAR_REDIRECT_URL=${GOOGLE_CALENDAR_REDIRECT_URL}
+      - MICROSOFT_CLIENT_ID=${MICROSOFT_CLIENT_ID}
+      - MICROSOFT_CLIENT_SECRET=${MICROSOFT_CLIENT_SECRET}
+      - MICROSOFT_REDIRECT_URL=${MICROSOFT_REDIRECT_URL}
+      - MICROSOFT_TENANT_ID=${MICROSOFT_TENANT_ID}
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - .:/app
+    depends_on:
+      - firebase
+    networks:
+      - bookify-network
+
+  firebase:
+    image: google/cloud-sdk:emulator
+    ports:
+      - "4000:4000"
+    environment:
+      - FIREBASE_DATABASE_EMULATOR_HOST=localhost:4000
+    networks:
+      - bookify-network
+
+networks:
+  bookify-network:
+    driver: bridge

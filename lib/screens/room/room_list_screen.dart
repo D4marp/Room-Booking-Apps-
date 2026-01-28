@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/room_provider_v2.dart';
-import '../../widgets/room_card.dart';
 
 class RoomListScreen extends StatefulWidget {
   const RoomListScreen({super.key});
@@ -11,12 +10,26 @@ class RoomListScreen extends StatefulWidget {
 }
 
 class _RoomListScreenState extends State<RoomListScreen> {
+  late RoomProvider _roomProvider;
+
   @override
   void initState() {
     super.initState();
+    _roomProvider = context.read<RoomProvider>();
+    
+    // Fetch initial rooms
     Future.delayed(Duration.zero, () {
-      context.read<RoomProvider>().fetchRooms();
+      _roomProvider.fetchRooms();
+      // Start event-driven refresh (every 30 seconds)
+      _roomProvider.startListeningToRoomChanges(refreshIntervalSeconds: 30);
     });
+  }
+
+  @override
+  void dispose() {
+    // Stop listening when screen is closed
+    _roomProvider.stopListeningToRoomChanges();
+    super.dispose();
   }
 
   @override
@@ -74,7 +87,19 @@ class _RoomListScreenState extends State<RoomListScreen> {
               itemCount: roomProvider.rooms.length,
               itemBuilder: (context, index) {
                 final room = roomProvider.rooms[index];
-                return RoomCard(room: room);
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    title: Text(room.name),
+                    subtitle: Text('${room.location} • Capacity: ${room.capacity}'),
+                    trailing: const Icon(Icons.arrow_forward_ios),
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Booking for ${room.name} coming soon!')),
+                      );
+                    },
+                  ),
+                );
               },
             ),
           );

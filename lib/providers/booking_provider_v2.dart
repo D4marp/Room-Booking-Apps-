@@ -134,8 +134,10 @@ class BookingProvider extends ChangeNotifier {
   }
 
   // Cancel booking
-  Future<bool> cancelBooking(String id) async {
-    return updateBooking(id, getBookingById(id)!.copyWith(status: 'cancelled'));
+  Future<bool> cancelBooking(String id) {
+    final booking = getBookingById(id);
+    if (booking == null) return Future.value(false);
+    return updateBooking(id, booking.copyWith(status: BookingStatus.cancelled));
   }
 
   // Clear error message

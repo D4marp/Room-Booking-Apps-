@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "989253852956",
+    "project_id": "srs-apps-lti",
+    "storage_bucket": "srs-apps-lti.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:989253852956:android:103acab0ac7891e29b24d9",
+        "android_client_info": {
+          "package_name": "com.bookify.rooms"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCl_VFErduYZSqWQiYPt4xNB2SpfxhUKig"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

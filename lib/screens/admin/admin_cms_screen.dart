@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider_v2.dart';
 import '../../providers/room_provider_v2.dart';
 import '../../providers/booking_provider_v2.dart';
+import '../../utils/app_theme.dart';
+import '../../core/gen/assets.gen.dart';
 import 'admin_rooms_cms_screen.dart';
 import 'admin_bookings_cms_screen.dart';
 import 'admin_users_cms_screen.dart';
@@ -54,7 +56,7 @@ class _AdminCMSScreenState extends State<AdminCMSScreen> {
       appBar: AppBar(
         title: const Text('Admin CMS - Room Booking System'),
         elevation: 0,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: AppColors.primaryRed,
         actions: [
           Padding(
             padding: const EdgeInsets.all(16.0),
@@ -83,40 +85,48 @@ class _AdminCMSScreenState extends State<AdminCMSScreen> {
           ),
         ],
       ),
-      body: Row(
-        children: [
-          // Sidebar
-          NavigationRail(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            backgroundColor: Colors.grey[100],
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.meeting_room),
-                selectedIcon: Icon(Icons.meeting_room, color: Colors.blueAccent),
-                label: Text('Rooms'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.calendar_today),
-                selectedIcon: Icon(Icons.calendar_today, color: Colors.blueAccent),
-                label: Text('Bookings'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.people),
-                selectedIcon: Icon(Icons.people, color: Colors.blueAccent),
-                label: Text('Users'),
-              ),
-            ],
+      backgroundColor: AppColors.creamBackground,
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(Assets.images.tabScreen.path),
+            fit: BoxFit.cover,
           ),
-          // Content
-          Expanded(
-            child: _pages[_selectedIndex],
-          ),
-        ],
+        ),
+        child: Row(
+          children: [
+            // Sidebar
+            NavigationRail(
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              backgroundColor: Colors.white,
+              selectedIconTheme: const IconThemeData(color: AppColors.primaryRed),
+              unselectedIconTheme: const IconThemeData(color: AppColors.secondaryText),
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.meeting_room),
+                  label: Text('Rooms'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.calendar_today),
+                  label: Text('Bookings'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.people),
+                  label: Text('Users'),
+                ),
+              ],
+            ),
+            // Content
+            Expanded(
+              child: _pages[_selectedIndex],
+            ),
+          ],
+        ),
       ),
     );
   }

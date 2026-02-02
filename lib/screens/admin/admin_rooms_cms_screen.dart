@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/room_provider_v2.dart';
 import '../../models/room_model.dart';
+import '../../utils/app_theme.dart';
+import '../../core/gen/assets.gen.dart';
 
 class AdminRoomsCMSScreen extends StatefulWidget {
   const AdminRoomsCMSScreen({super.key});
@@ -24,11 +26,12 @@ class _AdminRoomsCMSScreenState extends State<AdminRoomsCMSScreen> {
     return Consumer<RoomProvider>(
       builder: (context, roomProvider, _) {
         return Scaffold(
+          backgroundColor: AppColors.creamBackground,
           appBar: AppBar(
             title: const Text('Room Management'),
             backgroundColor: Colors.transparent,
             elevation: 0,
-            foregroundColor: Colors.black,
+            foregroundColor: AppColors.primaryText,
             actions: [
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -37,71 +40,62 @@ class _AdminRoomsCMSScreenState extends State<AdminRoomsCMSScreen> {
                   icon: const Icon(Icons.add),
                   label: const Text('Add Room'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: AppColors.primaryRed,
                     foregroundColor: Colors.white,
                   ),
                 ),
               ),
             ],
           ),
-          body: roomProvider.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : roomProvider.rooms.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.meeting_room_outlined, size: 64, color: Colors.grey[400]),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No rooms available',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                        ],
-                      ),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: ListView(
-                        children: [
-                          // Table/Grid view
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: DataTable(
-                              columns: const [
-                                DataColumn(label: Text('Name')),
-                                DataColumn(label: Text('Capacity')),
-                                DataColumn(label: Text('Location')),
-                                DataColumn(label: Text('Amenities')),
-                                DataColumn(label: Text('Actions')),
-                              ],
-                              rows: roomProvider.rooms.map((room) {
-                                return DataRow(cells: [
-                                  DataCell(Text(room.name)),
-                                  DataCell(Text(room.capacity.toString())),
-                                  DataCell(Text(room.location ?? '-')),
-                                  DataCell(Text((room.amenities ?? []).join(', '))),
-                                  DataCell(
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.edit, color: Colors.blue),
-                                          onPressed: () => _showEditRoomDialog(context, room),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete, color: Colors.red),
-                                          onPressed: () => _confirmDeleteRoom(context, room.id),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ]);
-                              }).toList(),
+          body: Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(Assets.images.tabScreen.path),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: roomProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : roomProvider.rooms.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.meeting_room_outlined, size: 64, color: Colors.grey[400]),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No rooms available',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ],
+                        ),
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: SingleChildScrollView(
+                          child: Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: DataTable(
+                                  columns: const [
+                                    DataColumn(label: Text('Room Name')),
+                                    DataColumn(label: Text('Capacity')),
+                                    DataColumn(label: Text('Location')),
+                                    DataColumn(label: Text('Amenities')),
+                                    DataColumn(label: Text('Actions')),
+                                  ],
+                                  rows: [],
+                                ),
+                              ),
                             ),
                           ),
-                        ],
+                        ),
                       ),
-                    ),
+          ),
         );
       },
     );
@@ -142,9 +136,7 @@ class _AdminRoomsCMSScreenState extends State<AdminRoomsCMSScreen> {
               ),
               TextField(
                 controller: amenitiesController,
-                decoration: const InputDecoration(
-                  labelText: 'Amenities (comma separated)',
-                ),
+                decoration: const InputDecoration(labelText: 'Amenities (comma separated)'),
               ),
             ],
           ),
@@ -162,10 +154,7 @@ class _AdminRoomsCMSScreenState extends State<AdminRoomsCMSScreen> {
                 description: descriptionController.text,
                 capacity: int.tryParse(capacityController.text) ?? 0,
                 location: locationController.text,
-                amenities: amenitiesController.text
-                    .split(',')
-                    .map((a) => a.trim())
-                    .toList(),
+                amenities: amenitiesController.text.split(',').map((a) => a.trim()).toList(),
                 imageUrl: '',
                 availability: true,
               );
@@ -192,9 +181,7 @@ class _AdminRoomsCMSScreenState extends State<AdminRoomsCMSScreen> {
     final descriptionController = TextEditingController(text: room.description);
     final capacityController = TextEditingController(text: room.capacity.toString());
     final locationController = TextEditingController(text: room.location);
-    final amenitiesController = TextEditingController(
-      text: (room.amenities ?? []).join(', '),
-    );
+    final amenitiesController = TextEditingController(text: (room.amenities ?? []).join(', '));
 
     showDialog(
       context: context,
@@ -224,9 +211,7 @@ class _AdminRoomsCMSScreenState extends State<AdminRoomsCMSScreen> {
               ),
               TextField(
                 controller: amenitiesController,
-                decoration: const InputDecoration(
-                  labelText: 'Amenities (comma separated)',
-                ),
+                decoration: const InputDecoration(labelText: 'Amenities (comma separated)'),
               ),
             ],
           ),
@@ -243,15 +228,10 @@ class _AdminRoomsCMSScreenState extends State<AdminRoomsCMSScreen> {
                 description: descriptionController.text,
                 capacity: int.tryParse(capacityController.text) ?? 0,
                 location: locationController.text,
-                amenities: amenitiesController.text
-                    .split(',')
-                    .map((a) => a.trim())
-                    .toList(),
+                amenities: amenitiesController.text.split(',').map((a) => a.trim()).toList(),
               );
 
-              final success = await context
-                  .read<RoomProvider>()
-                  .updateRoom(room.id, updatedRoom);
+              final success = await context.read<RoomProvider>().updateRoom(room.id, updatedRoom);
               if (mounted) {
                 Navigator.pop(context);
                 if (success) {

@@ -1,6 +1,6 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'api_config.dart';
+import '../utils/api_config.dart';
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -40,30 +40,32 @@ class ApiService {
   // GET request
   Future<dynamic> get(String endpoint) async {
     try {
+      final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
       final response = await _httpClient.get(
-        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        url,
         headers: _buildHeaders(),
       ).timeout(ApiConfig.connectionTimeout);
 
       return _handleResponse(response);
     } catch (e) {
+      print('[ApiService] GET Error from $endpoint: $e');
       throw _handleError(e);
-    }
-  }
     }
   }
 
   // POST request
   Future<dynamic> post(String endpoint, {required dynamic data}) async {
     try {
+      final url = Uri.parse('${ApiConfig.baseUrl}$endpoint');
       final response = await _httpClient.post(
-        Uri.parse('${ApiConfig.baseUrl}$endpoint'),
+        url,
         headers: _buildHeaders(),
         body: jsonEncode(data),
       ).timeout(ApiConfig.connectionTimeout);
 
       return _handleResponse(response);
     } catch (e) {
+      print('[ApiService] POST Error to $endpoint: $e');
       throw _handleError(e);
     }
   }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -111,6 +110,7 @@ func setupRoutes(
 	{
 		auth.POST("/login", authHandler.Login)
 		auth.POST("/register", authHandler.Register)
+		auth.POST("/google", authHandler.GoogleAuth)
 		auth.GET("/google/callback", authHandler.GoogleCallback)
 		auth.GET("/microsoft/callback", authHandler.MicrosoftCallback)
 	}
@@ -133,6 +133,7 @@ func setupRoutes(
 		booking.POST("", bookingHandler.CreateBooking)
 		booking.PUT("/:id", bookingHandler.UpdateBooking)
 		booking.DELETE("/:id", bookingHandler.DeleteBooking)
+		booking.POST("/check-availability", bookingHandler.CheckAvailability)
 	}
 
 	// Room routes

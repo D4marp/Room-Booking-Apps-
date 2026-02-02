@@ -3,7 +3,6 @@ package handlers
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -26,6 +25,13 @@ type RegisterRequest struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 	Name     string `json:"name" binding:"required"`
+}
+
+type GoogleAuthRequest struct {
+	IDToken     string `json:"id_token" binding:"required"`
+	AccessToken string `json:"access_token" binding:"required"`
+	Email       string `json:"email" binding:"required"`
+	Name        string `json:"name"`
 }
 
 type AuthResponse struct {
@@ -121,6 +127,42 @@ func (ah *AuthHandler) GoogleCallback(c *gin.Context) {
 
 	// TODO: Exchange code for token and create user
 	c.JSON(http.StatusOK, gin.H{"message": "Google callback endpoint"})
+}
+
+// GoogleAuth - Handle Google Sign-in from mobile app
+func (ah *AuthHandler) GoogleAuth(c *gin.Context) {
+	var req GoogleAuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.Email == "" || req.IDToken == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing required fields"})
+		return
+	}
+
+	// TODO: Verify token with Google
+
+	// Generate token for authenticated user
+	token := generateMockToken(req.Email)
+
+	// Determine role based on email
+	role := "user"
+	if req.Email == "admin@bookify.com" || req.Email == "admin@test.com" {
+		role = "admin"
+	}
+
+	c.JSON(http.StatusOK, AuthResponse{
+		Token: token,
+		User: map[string]interface{}{
+			"id":        "user_" + hex.EncodeToString([]byte(req.Email)[:8]),
+			"email":     req.Email,
+			"name":      req.Name,
+			"role":      role,
+			"createdAt": time.Now().Format(time.RFC3339),
+		},
+	})
 }
 
 func (ah *AuthHandler) MicrosoftCallback(c *gin.Context) {

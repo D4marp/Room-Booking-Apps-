@@ -22,16 +22,42 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Parse createdAt - handle both string (ISO format) and int (milliseconds)
+    DateTime parsedCreatedAt = DateTime.now();
+    if (json['createdAt'] != null) {
+      try {
+        if (json['createdAt'] is String) {
+          parsedCreatedAt = DateTime.parse(json['createdAt']);
+        } else if (json['createdAt'] is int) {
+          parsedCreatedAt = DateTime.fromMillisecondsSinceEpoch(json['createdAt']);
+        }
+      } catch (e) {
+        parsedCreatedAt = DateTime.now();
+      }
+    }
+
+    // Parse updatedAt - handle both string (ISO format) and int (milliseconds)
+    DateTime? parsedUpdatedAt;
+    if (json['updatedAt'] != null) {
+      try {
+        if (json['updatedAt'] is String) {
+          parsedUpdatedAt = DateTime.parse(json['updatedAt']);
+        } else if (json['updatedAt'] is int) {
+          parsedUpdatedAt = DateTime.fromMillisecondsSinceEpoch(json['updatedAt']);
+        }
+      } catch (e) {
+        parsedUpdatedAt = null;
+      }
+    }
+
     return UserModel(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
       email: json['email'] ?? '',
       profileImage: json['profileImage'],
       city: json['city'],
-      createdAt: DateTime.fromMillisecondsSinceEpoch(json['createdAt'] ?? 0),
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(json['updatedAt'])
-          : null,
+      createdAt: parsedCreatedAt,
+      updatedAt: parsedUpdatedAt,
       role: json['role'] == 'admin' 
           ? UserRole.admin 
           : json['role'] == 'booking'

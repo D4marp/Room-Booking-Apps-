@@ -81,6 +81,13 @@ var mockRooms = []RoomResponse{
 	},
 }
 
+// calculateRoomAvailability calculates if a room is available now and for the next 24 hours
+func calculateRoomAvailability(roomID string) bool {
+	now := time.Now()
+	// Check if room is available in next 24 hours for at least 1 hour slot
+	return isRoomAvailable(roomID, now, now.Add(1*time.Hour))
+}
+
 func NewRoomHandler(fs *services.FirebaseService) *RoomHandler {
 	return &RoomHandler{
 		firebaseService: fs,
@@ -88,10 +95,17 @@ func NewRoomHandler(fs *services.FirebaseService) *RoomHandler {
 }
 
 func (rh *RoomHandler) GetRooms(c *gin.Context) {
-	// Return mock data for testing
+	// Calculate real availability for each room based on bookings
+	roomsWithAvailability := make([]RoomResponse, len(mockRooms))
+	copy(roomsWithAvailability, mockRooms)
+	
+	for i := range roomsWithAvailability {
+		roomsWithAvailability[i].Availability = calculateRoomAvailability(roomsWithAvailability[i].ID)
+	}
+	
 	c.JSON(http.StatusOK, gin.H{
-		"data":    mockRooms,
-		"total":   len(mockRooms),
+		"data":    roomsWithAvailability,
+		"total":   len(roomsWithAvailability),
 		"message": "Rooms retrieved successfully",
 	})
 }

@@ -5,8 +5,6 @@ import '../../providers/auth_provider_v2.dart';
 import '../../utils/app_theme.dart';
 import '../../core/gen/assets.gen.dart';
 import '../main_navigation_screen.dart';
-import 'signup_screen.dart';
-import 'forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -274,11 +272,8 @@ class _LoginScreenState extends State<LoginScreen>
                                   const Spacer(),
                                   GestureDetector(
                                     onTap: () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const ForgotPasswordScreen(),
-                                        ),
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Password reset coming soon!')),
                                       );
                                     },
                                     child: const Text(
@@ -347,43 +342,110 @@ class _LoginScreenState extends State<LoginScreen>
 
                       const SizedBox(height: 24),
 
-                      // Sign Up Link
-                      Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Don\'t have an account? ',
+                      // Divider with "OR"
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              color: Colors.white30,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(
+                              'OR',
                               style: TextStyle(
+                                color: Colors.white60,
                                 fontSize: 14,
                                 fontFamily: 'Plus Jakarta Sans',
-                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(
-                                    builder: (context) => const SignUpScreen(),
-                                  ),
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Sign Up',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontFamily: 'Plus Jakarta Sans',
-                                  color: Color(0xFFEC0303),
-                                  fontWeight: FontWeight.w600,
-                                ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              color: Colors.white30,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Info text
+                      Center(
+                        child: Text(
+                          'Contact admin to create your account',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontFamily: 'Plus Jakarta Sans',
+                            color: Colors.white70,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Divider with OR text
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              color: Colors.white30,
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'OR',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontFamily: 'Plus Jakarta Sans',
                               ),
                             ),
-                          ],
+                          ),
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              color: Colors.white30,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Sign in with Google button
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final authProvider = Provider.of<AuthProvider>(
+                            context,
+                            listen: false,
+                          );
+                          final success =
+                              await authProvider.signInWithGoogle();
+                          if (success && mounted) {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const MainNavigationScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
+                        },
+                        icon: Icon(Icons.account_circle),
+                        label: Text('Sign in with Google'),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: Colors.white70),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                         ),
                       ),
 

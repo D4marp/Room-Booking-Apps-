@@ -34,7 +34,7 @@ func NewCalendarHandler(
 }
 
 func (ch *CalendarHandler) GetEvents(c *gin.Context) {
-	calendarType := c.Query("type") // "google" or "microsoft"
+	_ = c.Query("type") // "google" or "microsoft"
 	
 	// TODO: Get user access token from request/session
 	// TODO: Implement fetching events based on calendar type
